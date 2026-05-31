@@ -1,0 +1,253 @@
+<div class="dashboard-body animate-fade-in">
+  
+  <!-- Page Titles -->
+  <div class="body-header">
+    <h1 class="dashboard-title">Dashboard</h1>
+    <p class="dashboard-subtitle">Welcome to Fleet Admin Control Panel</p>
+  </div>
+
+  <!-- Metrics Statistics Card Grid (4 Cards) -->
+  <div class="metrics-grid">
+    
+    <!-- Metric 1: Total Bookings (Blue) -->
+    <div class="metric-card premium-card theme-blue">
+      <div class="card-left">
+        <div class="metric-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">Total Bookings</span>
+          <h3 class="metric-value">1,234</h3>
+        </div>
+      </div>
+      <div class="card-right">
+        <span class="trend-badge positive">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="12" height="12">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+          </svg>
+          12.5%
+        </span>
+      </div>
+    </div>
+
+    <!-- Metric 2: Active Drivers (Green) -->
+    <div class="metric-card premium-card theme-green">
+      <div class="card-left">
+        <div class="metric-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">Active Drivers</span>
+          <h3 class="metric-value">89</h3>
+        </div>
+      </div>
+      <div class="card-right">
+        <span class="trend-badge positive">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="12" height="12">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+          </svg>
+          5.2%
+        </span>
+      </div>
+    </div>
+
+    <!-- Metric 3: Active Vehicles (Purple) -->
+    <div class="metric-card premium-card theme-purple">
+      <div class="card-left">
+        <div class="metric-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zm12 0a2 2 0 11-4 0 2 2 0 014 0zm0-7v7M9 10h12M9 10L6 4H3M9 10v7M6 10H3"/>
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">Active Vehicles</span>
+          <h3 class="metric-value">156</h3>
+        </div>
+      </div>
+      <div class="card-right">
+        <span class="trend-badge positive">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="12" height="12">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+          </svg>
+          8.1%
+        </span>
+      </div>
+    </div>
+
+    <!-- Metric 4: Total Revenue (Gold) -->
+    <div class="metric-card premium-card theme-warning">
+      <div class="card-left">
+        <div class="metric-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="metric-info">
+          <span class="metric-label">Total Revenue</span>
+          <h3 class="metric-value">₹12.5L</h3>
+        </div>
+      </div>
+      <div class="card-right">
+        <span class="trend-badge positive">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="12" height="12">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+          </svg>
+          18.3%
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Layout Section (Two Columns) -->
+  <div class="charts-layout">
+    
+    <!-- Chart Column 1: Weekly Revenue (Line Curve SVG) -->
+    <div class="chart-card premium-card">
+      <div class="chart-header">
+        <h3>Weekly Revenue</h3>
+        <span class="badge-tag">Mon - Sun</span>
+      </div>
+      
+      <div class="chart-body relative">
+        <!-- Custom Bezier SVG Line Chart -->
+        <svg viewBox="0 0 700 240" class="svg-chart-container">
+          <!-- Definitions for smooth gradients -->
+          <defs>
+            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"/>
+            </linearGradient>
+            <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#2563eb"/>
+              <stop offset="100%" stop-color="#60a5fa"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Chart grid lines -->
+          <line x1="50" y1="40" x2="650" y2="40" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="50" y1="90" x2="650" y2="90" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="50" y1="140" x2="650" y2="140" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="50" y1="190" x2="650" y2="190" stroke="#cbd5e1" stroke-width="1"/>
+
+          <!-- Axis labels -->
+          <text x="15" y="45" class="axis-label">80k</text>
+          <text x="15" y="95" class="axis-label">60k</text>
+          <text x="15" y="145" class="axis-label">40k</text>
+          <text x="15" y="195" class="axis-label">20k</text>
+          <text x="25" y="235" class="axis-label">0</text>
+
+          <!-- Line Chart Area Filled Path -->
+          <path d="M 50,180 C 100,165 100,150 150,150 C 200,150 200,172 250,172 C 300,172 300,125 350,125 C 400,125 400,144 450,144 C 500,144 500,92 550,92 C 600,92 600,108 650,108 L 650,190 L 50,190 Z" fill="url(#areaGradient)"/>
+
+          <!-- Main Bezier Curve Line Path -->
+          <path d="M 50,180 C 100,165 100,150 150,150 C 200,150 200,172 250,172 C 300,172 300,125 350,125 C 400,125 400,144 450,144 C 500,144 500,92 550,92 C 600,92 600,108 650,108" fill="none" stroke="url(#lineGradient)" stroke-width="3" stroke-linecap="round"/>
+
+          <!-- Vertical grid trackers for hover dots -->
+          <line *ngFor="let item of weeklyRevenueData; let i = index" 
+                [attr.x1]="item.x" y1="40" 
+                [attr.x2]="item.x" y2="190" 
+                [attr.stroke]="hoveredLineIndex === i ? '#94a3b8' : 'transparent'" 
+                stroke-width="1.5" stroke-dasharray="3,3"/>
+
+          <!-- Data coordinate points -->
+          <circle *ngFor="let item of weeklyRevenueData; let i = index" 
+                  [attr.cx]="item.x" 
+                  [attr.cy]="item.y" 
+                  [attr.r]="hoveredLineIndex === i ? 7 : 5" 
+                  [attr.fill]="hoveredLineIndex === i ? '#2563eb' : '#ffffff'" 
+                  stroke="#2563eb" 
+                  stroke-width="3"
+                  class="svg-chart-point"
+                  (mouseenter)="hoveredLineIndex = i"
+                  (mouseleave)="hoveredLineIndex = null"/>
+
+          <!-- Day axis labels -->
+          <text *ngFor="let item of weeklyRevenueData" 
+                [attr.x]="item.x" y="215" 
+                text-anchor="middle" 
+                class="axis-label-bottom">{{item.day}}</text>
+        </svg>
+
+        <!-- Floating Line Tooltip -->
+        <div class="line-chart-tooltip premium-card" 
+             *ngIf="hoveredLineIndex !== null" 
+             [style.left.px]="weeklyRevenueData[hoveredLineIndex].x - 60"
+             [style.top.px]="weeklyRevenueData[hoveredLineIndex].y - 65">
+          <div class="tooltip-day">{{weeklyRevenueData[hoveredLineIndex].day}}</div>
+          <div class="tooltip-val">{{weeklyRevenueData[hoveredLineIndex].revenue}}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Column 2: Bookings by Vehicle Type (Bar Columns SVG) -->
+    <div class="chart-card premium-card">
+      <div class="chart-header">
+        <h3>Bookings by Vehicle Type</h3>
+        <span class="badge-tag">JCB - Loader</span>
+      </div>
+
+      <div class="chart-body relative">
+        <svg viewBox="0 0 600 240" class="svg-chart-container">
+          <!-- Grid line ticks -->
+          <line x1="60" y1="40" x2="560" y2="40" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="60" y1="77" x2="560" y2="77" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="60" y1="115" x2="560" y2="115" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="60" y1="152" x2="560" y2="152" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="60" y1="190" x2="560" y2="190" stroke="#cbd5e1" stroke-width="1"/>
+
+          <!-- Axis labels -->
+          <text x="25" y="45" class="axis-label">60</text>
+          <text x="25" y="82" class="axis-label">45</text>
+          <text x="25" y="120" class="axis-label">30</text>
+          <text x="25" y="157" class="axis-label">15</text>
+          <text x="35" y="195" class="axis-label">0</text>
+
+          <!-- Columns -->
+          <g *ngFor="let item of bookingsByVehicleType; let i = index">
+            <!-- Bar Column Background (for hover tracking) -->
+            <rect [attr.x]="85 + i * 95" 
+                  y="40" 
+                  width="55" 
+                  height="150" 
+                  fill="transparent"
+                  class="svg-bar-tracker"
+                  (mouseenter)="hoveredBarIndex = i"
+                  (mouseleave)="hoveredBarIndex = null"/>
+
+            <!-- Rounded Vertical Bar Column -->
+            <rect [attr.x]="85 + i * 95" 
+                  [attr.y]="190 - item.height" 
+                  width="55" 
+                  [attr.height]="item.height" 
+                  rx="8"
+                  [attr.fill]="hoveredBarIndex === i ? '#7c3aed' : '#8b5cf6'" 
+                  class="svg-chart-bar"
+                  (mouseenter)="hoveredBarIndex = i"
+                  (mouseleave)="hoveredBarIndex = null"/>
+          </g>
+
+          <!-- X-Axis Labels -->
+          <text *ngFor="let item of bookingsByVehicleType; let i = index" 
+                [attr.x]="112 + i * 95" 
+                y="215" 
+                text-anchor="middle" 
+                class="axis-label-bottom">{{item.type}}</text>
+        </svg>
+
+        <!-- Floating Column Tooltip -->
+        <div class="bar-chart-tooltip premium-card" 
+             *ngIf="hoveredBarIndex !== null" 
+             [style.left.px]="(85 + hoveredBarIndex * 95) - 30"
+             [style.top.px]="(190 - bookingsByVehicleType[hoveredBarIndex].height) - 45">
+          <div class="tooltip-val">{{bookingsByVehicleType[hoveredBarIndex].count}} Bookings</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

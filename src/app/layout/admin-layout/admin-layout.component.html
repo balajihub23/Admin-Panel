@@ -1,0 +1,15 @@
+<div class="dashboard-shell" [class.collapsed]="sidebarCollapsed">
+  <!-- Dynamic Sidebar Component -->
+  <app-sidebar [collapsed]="sidebarCollapsed"></app-sidebar>
+  
+  <!-- Right Page Layout Shell -->
+  <div class="main-content">
+    <!-- Topbar Component -->
+    <app-topbar (toggleSidebar)="sidebarCollapsed = !sidebarCollapsed"></app-topbar>
+    
+    <!-- Central Content Area -->
+    <main class="page-body">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

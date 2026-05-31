@@ -1,0 +1,25 @@
+.dashboard-shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--bg-primary);
+
+  &.collapsed {
+    grid-template-columns: 70px 1fr;
+  }
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-width: 0; // prevents layout blowouts in grid items
+  overflow: hidden;
+}
+
+.page-body {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--bg-primary);
+}
