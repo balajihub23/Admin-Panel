@@ -3,9 +3,11 @@ import { LoginComponent } from './components/login/login.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { SubpageComponent } from './components/subpage/subpage.component';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
   {
     path: '',
     component: AdminLayoutComponent,

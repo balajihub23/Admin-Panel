@@ -11,13 +11,24 @@ export class AuthService {
   private readonly baseUrl = environment.serverApi;
 
   login(payload: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/v1/auth/login`, payload).pipe(
+    const headers = { 'X-Client-App-Key': 'rentron-web-admin-secret-key-108F9' };
+    return this.http.post<any>(`${this.baseUrl}/api/v1/auth/login`, payload, { headers }).pipe(
       tap(response => {
         if (response.success && response.data) {
           this.setSession(response.data);
         }
       })
     );
+  }
+
+  sendOtp(payload: any): Observable<any> {
+    const headers = { 'X-Client-App-Key': 'rentron-web-admin-secret-key-108F9' };
+    return this.http.post<any>(`${this.baseUrl}/api/v1/auth/send-otp`, payload, { headers });
+  }
+
+  resetPassword(payload: any): Observable<any> {
+    const headers = { 'X-Client-App-Key': 'rentron-web-admin-secret-key-108F9' };
+    return this.http.post<any>(`${this.baseUrl}/api/v1/auth/reset-password`, payload, { headers });
   }
 
   refreshToken(refreshToken: string): Observable<any> {

@@ -1,14 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
 import { MenuService } from '../../shared/services/menu.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
@@ -48,7 +48,8 @@ export class LoginComponent implements OnInit {
     const loginPayload = {
       loginType: 'EMAIL_PASSWORD',
       email: this.email,
-      password: this.password
+      password: this.password,
+      deviceType: 'WEB'
     };
 
     this.authService.login(loginPayload).subscribe({
