@@ -4,6 +4,7 @@ import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.compone
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { SubpageComponent } from './components/subpage/subpage.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { authGuard } from './shared/guards/auth.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -11,6 +12,7 @@ export const routes: Routes = [
   {
     path: '',
     component: AdminLayoutComponent,
+    canActivate: [authGuard],
     children: [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'contractors', component: SubpageComponent },
