@@ -8,6 +8,7 @@ interface SidebarItem {
   code: string;
   icon: string;
   route: string;
+  subMenus?: SidebarItem[];
 }
 
 @Component({
@@ -56,13 +57,35 @@ export class SidebarComponent implements OnInit {
     }
   }
 
+  expandedItems = new Set<string>();
+
+  toggleItem(code: string): void {
+    if (this.expandedItems.has(code)) {
+      this.expandedItems.delete(code);
+    } else {
+      this.expandedItems.add(code);
+    }
+  }
+
+  isExpanded(code: string): boolean {
+    return this.expandedItems.has(code);
+  }
+
   private buildSidebar(menusList: any[]) {
-    this.sidebarItems = menusList.map((menu: any) => ({
+    this.sidebarItems = menusList.map((menu: any) => this.mapMenuToSidebarItem(menu));
+    // Auto-expand items that have submenus by default (optional — keep closed by default)
+  }
+
+  private mapMenuToSidebarItem(menu: any): SidebarItem {
+    return {
       name: menu.menuName,
       code: menu.menuCode,
       icon: this.mapIconCode(menu.icon || menu.menuCode),
-      route: menu.routePath
-    }));
+      route: menu.routePath,
+      subMenus: menu.subMenus && menu.subMenus.length > 0
+        ? menu.subMenus.map((sub: any) => this.mapMenuToSidebarItem(sub))
+        : undefined
+    };
   }
 
   private mapIconCode(icon: string): string {
