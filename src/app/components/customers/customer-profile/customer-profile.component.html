@@ -1,0 +1,158 @@
+<div class="customer-profile animate-fade-in">
+  <div class="header">
+    <a routerLink="/customers" class="back-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+    </a>
+    <div>
+      <h1>Customer Profile</h1>
+      <p class="subtitle">View and manage customer details</p>
+    </div>
+  </div>
+  <div class="profile-loading" *ngIf="isLoading">
+    <div class="spinner-container">
+      <div class="spinner"></div>
+      <p>Loading customer profile data...</p>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isLoading">
+    <div class="profile-layout">
+    <div class="left-col">
+      <div class="profile-card premium-card">
+        <div class="profile-header">
+          <div class="avatar-container">
+            <img src="https://i.pravatar.cc/150?img=47" alt="Profile avatar" class="avatar">
+          </div>
+          <div class="info">
+            <div class="name-status">
+              <h2>{{customer.name}}</h2>
+              <span class="status-badge" [ngClass]="{'status-active': customer.status === 'Active', 'status-suspended': customer.status === 'Suspended'}">
+                {{customer.status}}
+              </span>
+            </div>
+            <span class="customer-id text-muted">CUST-{{customer.id}}</span>
+          </div>
+        </div>
+        
+        <div class="contact-info">
+          <div class="info-row">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            <span>{{customer.contactNumber}}</span>
+          </div>
+          <div class="info-row">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <span>{{customer.email || '-'}}</span>
+          </div>
+          <div class="info-row">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span>{{customer.address || 'No address specified'}}</span>
+          </div>
+          <div class="info-row">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>Joined {{customer.joinDate || 'N/A'}}</span>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <button class="suspend-btn" [ngClass]="{'btn-suspend': customer.status === 'Active', 'btn-activate': customer.status === 'Suspended'}" (click)="toggleStatus()">
+            {{ customer.status === 'Active' ? 'Suspend Account' : 'Activate Account' }}
+          </button>
+          <button class="delete-profile-btn" (click)="deleteCustomer()">Delete Account</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div class="stats-grid">
+        <div class="stat-card premium-card">
+          <div class="icon-wrap bg-primary-light">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-title">Total Bookings</span>
+            <span class="stat-value">{{stats.totalBookings}}</span>
+          </div>
+        </div>
+        
+        <div class="stat-card premium-card">
+          <div class="icon-wrap bg-accent-light">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-title">Wallet Balance</span>
+            <span class="stat-value">₹{{stats.walletBalance | number:'1.0-0'}}</span>
+          </div>
+        </div>
+
+        <div class="stat-card premium-card">
+          <div class="icon-wrap bg-warning-light">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-title">Total Spent</span>
+            <span class="stat-value">₹{{stats.totalSpent | number:'1.0-0'}}</span>
+          </div>
+        </div>
+
+        <div class="stat-card premium-card booking-stats">
+          <span class="stat-title block mb-1">Booking Stats</span>
+          <div class="booking-stats-inner">
+            <div class="stat-item">
+              <span class="stat-label">Completed</span>
+              <span class="stat-val text-success">{{stats.completed}}</span>
+            </div>
+            <div class="stat-item border-left">
+              <span class="stat-label">Cancelled</span>
+              <span class="stat-val text-danger">0{{stats.cancelled}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="history-section premium-card">
+    <div class="history-header">
+      <h2>Booking History</h2>
+      <div class="filters">
+        <select class="filter-select">
+          <option>Last Month</option>
+        </select>
+        <select class="filter-select">
+          <option>All Status</option>
+        </select>
+      </div>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Booking ID</th>
+          <th>Date</th>
+          <th>Vehicle</th>
+          <th>Duration</th>
+          <th>Amount</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of history">
+          <td class="text-muted">{{item.id}}</td>
+          <td>{{item.date}}</td>
+          <td>{{item.vehicle}}</td>
+          <td>{{item.duration}}</td>
+          <td>{{item.amount ? '₹' + (item.amount | number:'1.0-0') : '-'}}</td>
+          <td>
+            <span class="status-badge" [ngClass]="{'status-completed': item.status === 'Completed', 'status-cancelled': item.status === 'Cancelled'}">
+              {{item.status}}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="history.length === 0">
+          <td colspan="6" class="text-center text-muted" style="padding: 2rem;">No bookings found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  </ng-container>
+</div>
