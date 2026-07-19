@@ -1,0 +1,424 @@
+<div class="driver-management animate-fade-in">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1>{{ currentView === 'list' ? 'Driver Management' : 'Driver Verification Queue' }}</h1>
+      <p class="subtitle">{{ currentView === 'list' ? 'Manage all registered drivers' : 'Review and approve driver applications' }}</p>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Toggle Queue view / List view -->
+      <button class="queue-btn" 
+              [class.active-queue]="currentView === 'queue'" 
+              (click)="toggleView(currentView === 'list' ? 'queue' : 'list')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" 
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        {{ currentView === 'list' ? 'Verification Queue' : 'Back to Drivers' }}
+      </button>
+
+      <button *ngIf="currentView === 'list'" class="add-driver-btn btn-primary" (click)="openAddModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add Driver
+      </button>
+    </div>
+  </div>
+
+  <!-- Metric Stats -->
+  <div class="stats-grid" *ngIf="currentView === 'list'; else queueStats">
+    <div class="stat-card premium-card">
+      <span class="stat-title">Total Drivers</span>
+      <span class="stat-value text-primary">{{totalDrivers}}</span>
+    </div>
+    <div class="stat-card premium-card">
+      <span class="stat-title">Online</span>
+      <span class="stat-value text-success">{{onlineDrivers}}</span>
+    </div>
+    <div class="stat-card premium-card">
+      <span class="stat-title">Busy</span>
+      <span class="stat-value text-default">{{busyDrivers}}</span>
+    </div>
+    <div class="stat-card premium-card">
+      <span class="stat-title">Pending Verification</span>
+      <span class="stat-value text-danger">{{pendingVerification}}</span>
+    </div>
+  </div>
+
+  <ng-template #queueStats>
+    <div class="stats-grid">
+      <div class="stat-card premium-card">
+        <span class="stat-title">Pending Applications</span>
+        <span class="stat-value text-danger">{{pendingVerification}}</span>
+      </div>
+      <div class="stat-card premium-card">
+        <span class="stat-title">Approved Today</span>
+        <span class="stat-value text-success">{{approvedToday}}</span>
+      </div>
+      <div class="stat-card premium-card">
+        <span class="stat-title">Rejected Today</span>
+        <span class="stat-value text-default">{{rejectedToday}}</span>
+      </div>
+      <div class="stat-card premium-card">
+        <span class="stat-title">Total Seeded</span>
+        <span class="stat-value text-muted">{{totalDrivers}}</span>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Main content wrapper -->
+  <div class="table-container premium-card">
+    <!-- Toolbar -->
+    <div class="table-toolbar">
+      <div class="search-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" [(ngModel)]="searchQuery" placeholder="Search by name, email or mobile number..." (ngModelChange)="currentPage = 1">
+      </div>
+
+      <div class="filters">
+        <select class="filter-select" [(ngModel)]="selectedRatingFilter" *ngIf="currentView === 'list'" (change)="currentPage = 1">
+          <option value="All">All Ratings</option>
+          <option value="4.5">⭐ 4.5 & above</option>
+          <option value="4.0">⭐ 4.0 & above</option>
+          <option value="3.5">⭐ 3.5 & above</option>
+        </select>
+
+        <select class="filter-select" [(ngModel)]="selectedStatusFilter" *ngIf="currentView === 'list'" (change)="currentPage = 1">
+          <option value="All">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="OFFLINE">Offline</option>
+          <option value="BUSY">Busy</option>
+          <option value="SUSPENDED">Suspended</option>
+        </select>
+
+        <button class="refresh-btn" (click)="refreshData()" [class.spinning]="isRefreshing" title="Refresh">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="refresh-icon">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- View 1: Active/Offline Drivers list table -->
+    <ng-container *ngIf="currentView === 'list'">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Driver ID</th>
+            <th>Name</th>
+            <th>License</th>
+            <th>Experience</th>
+            <th>Rating</th>
+            <th>Total Jobs</th>
+            <th>Status</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="isLoading">
+            <td colspan="8" class="text-center text-muted" style="padding: 3rem;">
+              <div class="table-spinner-container">
+                <div class="table-spinner"></div>
+                <span>Loading drivers...</span>
+              </div>
+            </td>
+          </tr>
+
+          <ng-container *ngIf="!isLoading">
+            <tr *ngFor="let driver of paginatedDrivers" [routerLink]="['/drivers', driver.id]" class="clickable-row">
+              <td class="text-muted">DRV-{{driver.id}}</td>
+              <td>
+                <div class="name-cell">
+                  <span class="name">{{driver.fullName}}</span>
+                  <span class="sub text-muted">{{driver.phone}}</span>
+                </div>
+              </td>
+              <td class="text-muted">{{driver.licenseNumber || '—'}}</td>
+              <td class="text-muted">{{driver.experience || '—'}}</td>
+              <td>
+                <div class="rating-cell">
+                  <span class="star">★</span>
+                  <span>{{driver.rating | number:'1.1-1'}}</span>
+                </div>
+              </td>
+              <td>{{driver.totalJobs}}</td>
+              <td>
+                <span class="status-badge"
+                  [ngClass]="{
+                    'status-active': driver.status === 'ACTIVE' || driver.status === 'ACTIVE_ONLINE',
+                    'status-offline': driver.status === 'OFFLINE',
+                    'status-busy': driver.status === 'BUSY',
+                    'status-pending': driver.status === 'PENDING_VERIFICATION',
+                    'status-suspended': driver.status === 'SUSPENDED' || driver.status === 'REJECTED'
+                  }">
+                  {{driver.status === 'PENDING_VERIFICATION' ? 'PENDING' : driver.status}}
+                </span>
+              </td>
+              <td class="actions-col" (click)="$event.stopPropagation()">
+                <!-- Inline Approval / Rejection actions -->
+                <ng-container *ngIf="driver.status === 'PENDING_VERIFICATION'">
+                  <button class="action-btn edit-btn" (click)="approveDriver(driver.id!, $event)" title="Approve applicant" style="color: #10b981; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); margin-right: 4px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
+                  <button class="action-btn delete-btn" (click)="rejectDriver(driver.id!, $event)" title="Reject applicant" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); margin-right: 4px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </ng-container>
+
+                <button class="action-btn edit-btn" (click)="openEditModal(driver, $event)" title="Edit details">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                </button>
+                <button class="action-btn delete-btn" (click)="deleteDriver(driver.id!, $event)" title="Delete driver">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-icon">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="paginatedDrivers.length === 0">
+              <td colspan="8" class="text-center text-muted" style="padding: 2rem;">No drivers found.</td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </ng-container>
+
+    <!-- View 2: Verification Queue Layout (Screenshot 3 style) -->
+    <ng-container *ngIf="currentView === 'queue'">
+      <div class="queue-container">
+        <div class="queue-loading text-center text-muted" style="padding: 3rem;" *ngIf="isLoading">
+          <div class="table-spinner-container">
+            <div class="table-spinner"></div>
+            <span>Loading verification queue...</span>
+          </div>
+        </div>
+
+        <ng-container *ngIf="!isLoading">
+          <div class="queue-list" *ngIf="paginatedDrivers.length > 0">
+            <div class="queue-card premium-card" *ngFor="let item of paginatedDrivers">
+              <div class="card-left">
+                <div class="avatar-chip">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                
+                <div class="driver-details">
+                  <div class="name-status">
+                    <h3>{{item.fullName}}</h3>
+                    <span class="badge-status-pending" [class.badge-status-rejected]="item.status === 'REJECTED'">
+                      {{ item.status === 'PENDING_VERIFICATION' ? 'Pending Review' : 'Rejected' }}
+                    </span>
+                  </div>
+
+                  <div class="details-grid">
+                    <div class="detail-item">
+                      <span class="label">Mobile</span>
+                      <span class="value">{{item.phone}}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="label">License Number</span>
+                      <span class="value">{{item.licenseNumber || '—'}}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="label">Aadhaar</span>
+                      <span class="value">{{item.aadhaarNumber ? 'XXXX XXXX ' + item.aadhaarNumber.slice(-4) : '—'}}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="label">Experience</span>
+                      <span class="value">{{item.experience || '—'}}</span>
+                    </div>
+                  </div>
+
+                  <!-- Real dynamic documents download links -->
+                  <div class="submitted-documents">
+                    <span class="doc-title">Submitted Documents:</span>
+                    <div class="doc-chips">
+                      <a *ngIf="getDocForDriver(item.id!, 'DRIVING_LICENSE') as doc" 
+                         [href]="getDownloadUrl(doc)" target="_blank" class="doc-chip">
+                        📄 Driving License (Download)
+                      </a>
+                      <a *ngIf="getDocForDriver(item.id!, 'AADHAAR_CARD') as doc" 
+                         [href]="getDownloadUrl(doc)" target="_blank" class="doc-chip">
+                        📄 Aadhaar Card (Download)
+                      </a>
+                      <a *ngIf="getDocForDriver(item.id!, 'PHOTO') as doc" 
+                         [href]="getDownloadUrl(doc)" target="_blank" class="doc-chip">
+                        🖼️ Profile Photo (Download)
+                      </a>
+                      <span *ngIf="!getDocForDriver(item.id!, 'DRIVING_LICENSE') && !getDocForDriver(item.id!, 'AADHAAR_CARD') && !getDocForDriver(item.id!, 'PHOTO')" 
+                            class="text-muted" style="font-size: 11px;">
+                        No compliance files uploaded.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-right">
+                <button class="btn-approve" (click)="approveDriver(item.id!, $event)">Approve</button>
+                <button class="btn-reject" (click)="rejectDriver(item.id!, $event)" *ngIf="item.status === 'PENDING_VERIFICATION'">Reject</button>
+                <button class="btn-delete-q" (click)="deleteDriver(item.id!, $event)">Delete Application</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="queue-empty text-center text-muted" style="padding: 4rem;" *ngIf="paginatedDrivers.length === 0">
+            No driver applications pending review.
+          </div>
+        </ng-container>
+      </div>
+    </ng-container>
+
+    <div class="pagination-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <div class="total-records">Total : <span class="font-bold">{{filteredDrivers.length}}</span></div>
+      
+      <div class="pagination-controls" style="display: flex; gap: 6px; align-items: center;">
+        <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 1" 
+                style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 6px; background:#fff; cursor:pointer; font-size:13px; color:#475569;">
+          ← Previous
+        </button>
+        <span style="font-size: 13px; color: #475569; font-weight: 500;">Page {{currentPage}} of {{totalPages}}</span>
+        <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages" 
+                style="padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 6px; background:#fff; cursor:pointer; font-size:13px; color:#475569;">
+          Next →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal CRUD Form -->
+<div class="modal-overlay" *ngIf="isModalOpen" (click)="closeModal()">
+  <div class="modal-card premium-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{modalTitle}}</h2>
+      <button class="close-btn" (click)="closeModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <form (submit)="onSubmit()" class="modal-form">
+      <div class="error-banner" *ngIf="formError">{{formError}}</div>
+
+      <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); max-height: 60vh; overflow-y: auto; padding: 4px;">
+        <div class="form-group">
+          <label for="fullName">Full Name *</label>
+          <input type="text" id="fullName" name="fullName" [(ngModel)]="formName" placeholder="Rajesh Kumar" required>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number *</label>
+          <input type="text" id="phone" name="phone" [(ngModel)]="formPhone" placeholder="+919876543210" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" [(ngModel)]="formEmail" placeholder="rajesh@example.com">
+        </div>
+
+        <div class="form-group">
+          <label for="licenseNumber">License Number</label>
+          <input type="text" id="licenseNumber" name="licenseNumber" [(ngModel)]="formLicense" placeholder="DL-0120230045678">
+        </div>
+
+        <div class="form-group">
+          <label for="aadhaarNumber">Aadhaar Number</label>
+          <input type="text" id="aadhaarNumber" name="aadhaarNumber" [(ngModel)]="formAadhaar" placeholder="12-digit Aadhaar">
+        </div>
+
+        <div class="form-group">
+          <label for="experience">Experience</label>
+          <input type="text" id="experience" name="experience" [(ngModel)]="formExperience" placeholder="e.g. 6 years">
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label for="contractorId">Associated Contractor</label>
+          <select id="contractorId" name="contractorId" [(ngModel)]="formContractorId" class="filter-select" style="padding: 10px 14px; width:100%; border: 1px solid #e2e8f0; border-radius: 8px; font-size:14px; color:#0f172a; outline:none; height:42px;">
+            <option [ngValue]="null">— None —</option>
+            <option *ngFor="let c of contractors" [ngValue]="c.id">
+              {{c.fullName}} ({{c.companyName || 'No Company'}})
+            </option>
+          </select>
+        </div>
+
+        <!-- Document Uploader Fields (Always visible, preloaded on edit) -->
+        <div class="form-group" style="grid-column: span 2; border-top: 1px solid #f1f5f9; padding-top: 16px; margin-top: 8px;">
+          <app-file-uploader 
+            label="Driving License Copy" 
+            accept="image/*,application/pdf" 
+            entityType="DRIVER" 
+            documentType="DRIVING_LICENSE" 
+            [initialFileName]="editLicenseDoc?.fileName || null"
+            [initialFileUrl]="editLicenseDoc ? getDownloadUrl(editLicenseDoc) : null"
+            [initialFileId]="editLicenseDoc?.id || null"
+            (uploadSuccess)="onUploadSuccess($event)" 
+            (docCleared)="onDocCleared($event)">
+          </app-file-uploader>
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <app-file-uploader 
+            label="Aadhaar Card Copy" 
+            accept="image/*,application/pdf" 
+            entityType="DRIVER" 
+            documentType="AADHAAR_CARD" 
+            [initialFileName]="editAadhaarDoc?.fileName || null"
+            [initialFileUrl]="editAadhaarDoc ? getDownloadUrl(editAadhaarDoc) : null"
+            [initialFileId]="editAadhaarDoc?.id || null"
+            (uploadSuccess)="onUploadSuccess($event)" 
+            (docCleared)="onDocCleared($event)">
+          </app-file-uploader>
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <app-file-uploader 
+            label="Driver Profile Photo" 
+            accept="image/*" 
+            entityType="DRIVER" 
+            documentType="PHOTO" 
+            [initialFileName]="editPhotoDoc?.fileName || null"
+            [initialFileUrl]="editPhotoDoc ? getDownloadUrl(editPhotoDoc) : null"
+            [initialFileId]="editPhotoDoc?.id || null"
+            (uploadSuccess)="onUploadSuccess($event)" 
+            (docCleared)="onDocCleared($event)">
+          </app-file-uploader>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" [disabled]="isSaving" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="isSaving">
+          <span *ngIf="!isSaving">Save Application</span>
+          <span *ngIf="isSaving">Saving...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

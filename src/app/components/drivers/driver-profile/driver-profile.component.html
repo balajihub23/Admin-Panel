@@ -1,0 +1,177 @@
+<div class="driver-profile-container animate-fade-in" *ngIf="driver; else loadingOrError">
+  <!-- Back navigation -->
+  <div class="profile-header">
+    <a routerLink="/drivers" class="back-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="back-icon"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <span>Back to Driver Management</span>
+    </a>
+  </div>
+
+  <div class="profile-layout">
+    <!-- Left: Identity Card -->
+    <div class="identity-card premium-card">
+      <div class="identity-header">
+        <div class="avatar-large">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+        <div class="identity-name">
+          <h2>{{driver.fullName}}</h2>
+          <div class="meta-row">
+            <span class="id-tag">DRV-{{driver.id}}</span>
+            <span class="status-indicator" 
+                  [ngClass]="{
+                    'status-active': driver.status === 'ACTIVE' || driver.status === 'ACTIVE_ONLINE',
+                    'status-offline': driver.status === 'OFFLINE',
+                    'status-busy': driver.status === 'BUSY',
+                    'status-suspended': driver.status === 'SUSPENDED' || driver.status === 'REJECTED'
+                  }">
+              {{driver.status}}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="identity-details">
+        <div class="info-row">
+          <span class="icon">📞</span>
+          <span class="label">Mobile:</span>
+          <span class="value">{{driver.phone}}</span>
+        </div>
+        <div class="info-row" *ngIf="driver.email">
+          <span class="icon">✉️</span>
+          <span class="label">Email:</span>
+          <span class="value">{{driver.email}}</span>
+        </div>
+        <div class="info-row">
+          <span class="icon">🪪</span>
+          <span class="label">License:</span>
+          <span class="value">{{driver.licenseNumber || '—'}}</span>
+        </div>
+        <div class="info-row">
+          <span class="icon">💳</span>
+          <span class="label">Aadhaar:</span>
+          <span class="value">{{driver.aadhaarNumber || '—'}}</span>
+        </div>
+        <div class="info-row">
+          <span class="icon">💼</span>
+          <span class="label">Experience:</span>
+          <span class="value">{{driver.experience || '—'}}</span>
+        </div>
+        <div class="info-row">
+          <span class="icon">📅</span>
+          <span class="label">Joined:</span>
+          <span class="value">{{driver.createdAt | date:'yyyy-MM-dd'}}</span>
+        </div>
+        <div class="info-row">
+          <span class="icon">⭐</span>
+          <span class="label">Rating:</span>
+          <span class="value">{{driver.rating | number:'1.1-1'}}/5</span>
+        </div>
+      </div>
+
+      <!-- Compliance Documents section -->
+      <div class="identity-details" style="border-top: 1px solid #f1f5f9; padding-top: 16px; margin-top: 12px; margin-bottom: 12px;">
+        <h4 style="font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 10px;">Verification Documents</h4>
+        <div *ngIf="documents.length === 0" class="text-muted" style="font-size: 12px;">
+          No verification files uploaded.
+        </div>
+        <div *ngFor="let doc of documents" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-size: 12px; color: #475569; font-weight: 500;">
+            {{ doc.documentType.replace('_', ' ') }}
+          </span>
+          <a [href]="getDownloadUrl(doc)" target="_blank" style="font-size: 11px; color: var(--primary, #ff9800); font-weight: 600; text-decoration: underline;">
+            Download
+          </a>
+        </div>
+      </div>
+
+      <div class="identity-actions">
+        <!-- If pending or rejected, show Approve button -->
+        <button class="btn-approve-action" *ngIf="driver.status === 'PENDING_VERIFICATION' || driver.status === 'REJECTED'" (click)="approveDriver()">Approve Driver</button>
+        
+        <!-- If active/busy/offline, show Suspend option -->
+        <button class="btn-suspend-action" *ngIf="driver.status === 'ACTIVE' || driver.status === 'OFFLINE' || driver.status === 'BUSY'" (click)="suspendAccount()">Suspend Account</button>
+        
+        <!-- If suspended, show Reactivate option -->
+        <button class="btn-unsuspend-action" *ngIf="driver.status === 'SUSPENDED'" (click)="unsuspendAccount()">Reactivate Account</button>
+      </div>
+    </div>
+
+    <!-- Right: Stats & History -->
+    <div class="stats-history-layout">
+      <!-- High Level Metrics Grid -->
+      <div class="stats-grid">
+        <div class="stat-card premium-card">
+          <span class="stat-title">Total Jobs</span>
+          <span class="stat-value">{{completedJobs}}</span>
+        </div>
+        <div class="stat-card premium-card">
+          <span class="stat-title">Wallet Balance</span>
+          <span class="stat-value">₹2,500</span>
+        </div>
+        <div class="stat-card premium-card">
+          <span class="stat-title">Total Earnings</span>
+          <span class="stat-value">₹{{driver.totalEarnings | number:'1.0-0'}}</span>
+        </div>
+        <div class="stat-card premium-card double-height">
+          <span class="stat-title">Job Stats</span>
+          <div class="job-stats-breakdown">
+            <div class="breakdown-item text-success">
+              <span class="num">{{completedJobs}}</span>
+              <span class="lbl">Completed</span>
+            </div>
+            <div class="breakdown-item text-danger">
+              <span class="num">{{cancelledJobs | number:'2.0-0'}}</span>
+              <span class="lbl">Cancelled</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Job History Table -->
+      <div class="table-container premium-card">
+        <div class="table-header">
+          <h3>Job History</h3>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Job ID</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Duration</th>
+              <th>Earnings</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let job of jobs">
+              <td class="text-muted">{{job.id}}</td>
+              <td>{{job.date}}</td>
+              <td>{{job.customer}}</td>
+              <td>{{job.duration}}</td>
+              <td>₹{{job.earnings | number}}</td>
+              <td>
+                <span class="status-badge" [ngClass]="{'status-active': job.status === 'Completed', 'status-suspended': job.status === 'Cancelled'}">
+                  {{job.status}}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="jobs.length === 0">
+              <td colspan="6" class="text-center text-muted" style="padding: 2rem;">No jobs registered yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingOrError>
+  <div class="profile-loader text-center text-muted" style="padding: 5rem;">
+    <div class="table-spinner-container">
+      <div class="table-spinner"></div>
+      <span>Loading profile details...</span>
+    </div>
+  </div>
+</ng-template>

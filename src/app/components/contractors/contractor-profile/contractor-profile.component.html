@@ -1,0 +1,134 @@
+<div class="contractor-profile-container animate-fade-in" *ngIf="contractor; else loadingOrError">
+  <!-- Back navigation -->
+  <div class="profile-header">
+    <a routerLink="/contractors" class="back-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="back-icon"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <span>Back to Contractor Management</span>
+    </a>
+  </div>
+
+  <div class="profile-layout">
+    <!-- Left: Identity Card -->
+    <div class="identity-card premium-card">
+      <div class="identity-header">
+        <div class="avatar-large">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        </div>
+        <div class="identity-name">
+          <h2>{{contractor.fullName}}</h2>
+          <div class="meta-row">
+            <span class="id-tag">CON-{{contractor.id}}</span>
+            <span class="status-indicator" 
+                  [ngClass]="{
+                    'status-active': contractor.status === 'ACTIVE',
+                    'status-suspended': contractor.status === 'SUSPENDED' || contractor.status === 'REJECTED'
+                  }">
+              {{contractor.status}}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="identity-details">
+        <div class="info-row">
+          <span class="icon">📞</span>
+          <span class="label">Mobile:</span>
+          <span class="value">{{contractor.phone}}</span>
+        </div>
+        <div class="info-row" *ngIf="contractor.email">
+          <span class="icon">✉️</span>
+          <span class="label">Email:</span>
+          <span class="value">{{contractor.email}}</span>
+        </div>
+        <div class="info-row">
+          <span class="icon">🏢</span>
+          <span class="label">Company:</span>
+          <span class="value">{{contractor.companyName || '—'}}</span>
+        </div>
+        <div class="info-row">
+          <span class="icon">🪪</span>
+          <span class="label">GST Number:</span>
+          <span class="value">{{contractor.gstNumber || '—'}}</span>
+        </div>
+        <div class="info-row">
+          <span class="icon">💼</span>
+          <span class="label">Experience:</span>
+          <span class="value">{{contractor.experience || '—'}}</span>
+        </div>
+        <div class="info-row">
+          <span class="icon">📅</span>
+          <span class="label">Joined:</span>
+          <span class="value">{{contractor.createdAt | date:'yyyy-MM-dd'}}</span>
+        </div>
+        <div class="info-row">
+          <span class="icon">⭐</span>
+          <span class="label">Rating:</span>
+          <span class="value">{{contractor.rating | number:'1.1-1'}}/5</span>
+        </div>
+      </div>
+
+      <div class="identity-actions">
+        <!-- If pending or rejected, show Approve button -->
+        <button class="btn-approve-action" *ngIf="contractor.status === 'PENDING_VERIFICATION' || contractor.status === 'REJECTED'" (click)="approveContractor()">Approve Contractor</button>
+        
+        <!-- If active, show Suspend option -->
+        <button class="btn-suspend-action" *ngIf="contractor.status === 'ACTIVE'" (click)="suspendAccount()">Suspend Account</button>
+        
+        <!-- If suspended, show Reactivate option -->
+        <button class="btn-unsuspend-action" *ngIf="contractor.status === 'SUSPENDED'" (click)="unsuspendAccount()">Reactivate Account</button>
+      </div>
+    </div>
+
+    <!-- Right: Stats -->
+    <div class="stats-history-layout">
+      <!-- High Level Metrics Grid -->
+      <div class="stats-grid">
+        <div class="stat-card premium-card">
+          <span class="stat-title">Active Projects</span>
+          <span class="stat-value">12</span>
+        </div>
+        <div class="stat-card premium-card">
+          <span class="stat-title">Linked Drivers</span>
+          <span class="stat-value">6</span>
+        </div>
+        <div class="stat-card premium-card">
+          <span class="stat-title">Performance Rating</span>
+          <span class="stat-value">{{contractor.rating | number:'1.1-1'}} / 5.0</span>
+        </div>
+      </div>
+
+      <!-- General Documents Details info card -->
+      <div class="table-container premium-card" style="padding: 24px;">
+        <h3 style="margin-top:0; margin-bottom: 16px; color:#0f172a;">Submitted Verification Documents</h3>
+        <p class="text-muted" style="font-size: 14px; margin-bottom: 20px;">The following compliance files are uploaded and active for this contractor account.</p>
+        
+        <div *ngIf="documents.length === 0" class="text-muted" style="font-size: 14px; padding: 12px 16px; border: 1px dashed #cbd5e1; border-radius: 8px; text-align: center;">
+          No verification files uploaded.
+        </div>
+
+        <div class="docs-list" style="display:flex; flex-direction:column; gap:12px;" *ngIf="documents.length > 0">
+          <div class="doc-file-row" *ngFor="let doc of documents" style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border:1px solid #e2e8f0; border-radius:8px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span>📄</span>
+              <span style="font-weight:600; font-size:14px; color:#1e293b;">
+                {{ doc.documentType.replace('_', ' ') }}
+              </span>
+            </div>
+            <a [href]="getDownloadUrl(doc)" target="_blank" style="font-size: 13px; color: var(--primary, #ff9800); font-weight: 700; text-decoration: underline;">
+              Download / View
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingOrError>
+  <div class="profile-loader text-center text-muted" style="padding: 5rem;">
+    <div class="table-spinner-container">
+      <div class="table-spinner"></div>
+      <span>Loading contractor profile details...</span>
+    </div>
+  </div>
+</ng-template>
