@@ -1,4 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -8,6 +9,7 @@ import { environment } from '../../../environments/environment';
 })
 export class AuthService {
   private http = inject(HttpClient);
+  private platformId = inject(PLATFORM_ID);
   private readonly baseUrl = environment.serverApi;
 
   login(payload: any): Observable<any> {
@@ -52,7 +54,7 @@ export class AuthService {
   }
 
   private setSession(authData: any): void {
-    if (typeof window !== 'undefined') {
+    if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem('accessToken', authData.accessToken);
       localStorage.setItem('refreshToken', authData.refreshToken);
       localStorage.setItem('userRole', authData.role);
@@ -64,28 +66,28 @@ export class AuthService {
   }
 
   clearSession(): void {
-    if (typeof window !== 'undefined') {
+    if (isPlatformBrowser(this.platformId)) {
       localStorage.clear();
     }
   }
 
   isLoggedIn(): boolean {
-    return typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+    return isPlatformBrowser(this.platformId) && !!localStorage.getItem('accessToken');
   }
 
   getAccessToken(): string | null {
-    return typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    return isPlatformBrowser(this.platformId) ? localStorage.getItem('accessToken') : null;
   }
 
   getRefreshToken(): string | null {
-    return typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+    return isPlatformBrowser(this.platformId) ? localStorage.getItem('refreshToken') : null;
   }
 
   getUserRole(): string | null {
-    return typeof window !== 'undefined' ? localStorage.getItem('userRole') : null;
+    return isPlatformBrowser(this.platformId) ? localStorage.getItem('userRole') : null;
   }
 
   getUserFullName(): string | null {
-    return typeof window !== 'undefined' ? localStorage.getItem('userFullName') : null;
+    return isPlatformBrowser(this.platformId) ? localStorage.getItem('userFullName') : null;
   }
 }

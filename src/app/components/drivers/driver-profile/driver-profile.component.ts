@@ -33,7 +33,7 @@ export class DriverProfileComponent implements OnInit {
 
   // Stats
   completedJobs = 0;
-  cancelledJobs = 8; // static mock value from Screenshot 2
+  cancelledJobs = 0;
 
   // Simulated Job History
   jobs: Job[] = [];
@@ -54,10 +54,27 @@ export class DriverProfileComponent implements OnInit {
       next: (res) => {
         this.isLoading = false;
         if (res.success && res.data) {
-          this.driver = res.data;
-          this.completedJobs = res.data.totalJobs || 0;
-          this.generateMockJobs();
+          const driver = res.data;
+          this.driver = driver;
+          this.completedJobs = driver.totalJobs || 0;
           this.loadDocuments();
+
+          // Populate a default onboarding entry in the job history table once approved
+          if (driver.status === 'ACTIVE' || driver.status === 'ACTIVE_ONLINE' || driver.status === 'BUSY' || driver.status === 'OFFLINE') {
+            const approvalDate = driver.createdAt ? driver.createdAt.split('T')[0] : new Date().toISOString().split('T')[0];
+            this.jobs = [
+              {
+                id: 'SYS-VERIFY',
+                date: approvalDate,
+                customer: 'System Onboarding & Verification',
+                duration: 'Verified',
+                earnings: 0,
+                status: 'Completed'
+              }
+            ];
+          } else {
+            this.jobs = [];
+          }
         }
       },
       error: (err) => {
@@ -76,16 +93,6 @@ export class DriverProfileComponent implements OnInit {
       },
       error: (err) => console.error('Error loading documents:', err)
     });
-  }
-
-  generateMockJobs(): void {
-    if (!this.driver) return;
-    this.jobs = [
-      { id: 'BK-101', date: '2025-01-15', customer: 'Rajesh Sharma', duration: '8 hours', earnings: 2500, status: 'Completed' },
-      { id: 'BK-098', date: '2025-01-12', customer: 'Vikas Gupta', duration: '6 hours', earnings: 1800, status: 'Completed' },
-      { id: 'BK-095', date: '2025-01-10', customer: 'Amit Kumar', duration: '4 hours', earnings: 1200, status: 'Completed' },
-      { id: 'BK-090', date: '2025-01-08', customer: 'Karan Singh', duration: '8 hours', earnings: 2500, status: 'Completed' }
-    ];
   }
 
   approveDriver(): void {
