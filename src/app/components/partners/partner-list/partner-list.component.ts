@@ -7,6 +7,8 @@ import { ContractorService } from '../../../shared/services/contractor.service';
 import { DriverService } from '../../../shared/services/driver.service';
 import { DocumentService } from '../../../shared/services/document.service';
 
+import { ToastService } from '../../../shared/services/toast.service';
+
 @Component({
   selector: 'app-partner-list',
   standalone: true,
@@ -20,6 +22,7 @@ export class PartnerListComponent implements OnInit {
   private driverService = inject(DriverService);
   private documentService = inject(DocumentService);
   private router = inject(Router);
+  private toastService = inject(ToastService);
 
   // View state
   viewMode: 'LIST' | 'QUEUE' = 'LIST';
@@ -325,7 +328,7 @@ export class PartnerListComponent implements OnInit {
 
   saveNewPartner(): void {
     if (!this.newPartner.fullName || !this.newPartner.phone || !this.newPartner.password) {
-      alert('Full Name, Phone Number, and Password are required');
+      this.toastService.showError('Full Name, Phone Number, and Password are required.');
       return;
     }
 
@@ -336,11 +339,10 @@ export class PartnerListComponent implements OnInit {
           const partnerId = res.data.id;
           const partnerType = this.newPartner.partnerType || 'DRIVER';
 
-          // Upload all attached files sequentially
           const fileKeys = Object.keys(this.selectedFiles);
           if (fileKeys.length === 0) {
             this.isLoading = false;
-            alert('Partner registered successfully!');
+            this.toastService.showSuccess('✓ Partner registered successfully!');
             this.closeAddModal();
             this.loadPartners();
             return;
@@ -358,13 +360,13 @@ export class PartnerListComponent implements OnInit {
 
           Promise.all(uploadPromises).then(() => {
             this.isLoading = false;
-            alert('Partner registered and documents uploaded successfully!');
+            this.toastService.showSuccess('✓ Partner registered and documents uploaded successfully!');
             this.closeAddModal();
             this.loadPartners();
           }).catch(err => {
             this.isLoading = false;
             console.error('Error uploading documents:', err);
-            alert('Partner registered successfully!');
+            this.toastService.showSuccess('✓ Partner registered successfully!');
             this.closeAddModal();
             this.loadPartners();
           });
@@ -372,7 +374,7 @@ export class PartnerListComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        alert(err.error?.message || 'Registration failed');
+        this.toastService.showError(err.error?.message || 'Registration failed');
       }
     });
   }
@@ -443,12 +445,12 @@ export class PartnerListComponent implements OnInit {
     this.partnerService.assignDriverToContractor(this.selectedDriverToAssign.id, this.targetContractorId).subscribe({
       next: (res) => {
         if (res.success) {
-          alert('Driver assignment updated successfully');
+          this.toastService.showSuccess('✓ Driver assignment updated successfully');
           this.closeAssignModal();
           this.loadPartners();
         }
       },
-      error: (err) => alert(err.error?.message || 'Assignment failed')
+      error: (err) => this.toastService.showError(err.error?.message || 'Assignment failed')
     });
   }
 
@@ -461,14 +463,14 @@ export class PartnerListComponent implements OnInit {
         partner.isProcessing = false;
         if (res.success) {
           partner.status = 'ACTIVE';
-          alert('Partner approved! User login account created and activated.');
+          this.toastService.showSuccess('✓ Partner approved! User login account activated.');
           this.stats.approvedToday++;
           this.loadPartners();
         }
       },
       error: (err) => {
         partner.isProcessing = false;
-        alert(err.error?.message || 'Approval failed');
+        this.toastService.showError(err.error?.message || 'Approval failed');
       }
     });
   }
@@ -478,12 +480,12 @@ export class PartnerListComponent implements OnInit {
     this.partnerService.rejectPartner(partner.id, type).subscribe({
       next: (res) => {
         if (res.success) {
-          alert('Partner application rejected.');
+          this.toastService.showSuccess('✓ Partner application rejected.');
           this.stats.rejectedToday++;
           this.loadPartners();
         }
       },
-      error: (err) => alert(err.error?.message || 'Rejection failed')
+      error: (err) => this.toastService.showError(err.error?.message || 'Rejection failed')
     });
   }
 
@@ -498,12 +500,12 @@ export class PartnerListComponent implements OnInit {
         next: () => {
           partner.isProcessing = false;
           partner.status = 'SUSPENDED';
-          alert('Partner account suspended.');
+          this.toastService.showSuccess('✓ Partner account suspended.');
           this.loadPartners();
         },
         error: (err) => {
           partner.isProcessing = false;
-          alert(err.error?.message || 'Failed to suspend partner.');
+          this.toastService.showError(err.error?.message || 'Failed to suspend partner.');
         }
       });
     }
@@ -519,12 +521,12 @@ export class PartnerListComponent implements OnInit {
       next: () => {
         partner.isProcessing = false;
         partner.status = 'ACTIVE';
-        alert('Partner account reactivated.');
+        this.toastService.showSuccess('✓ Partner account reactivated.');
         this.loadPartners();
       },
       error: (err) => {
         partner.isProcessing = false;
-        alert(err.error?.message || 'Failed to reactivate partner.');
+        this.toastService.showError(err.error?.message || 'Failed to reactivate partner.');
       }
     });
   }

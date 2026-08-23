@@ -1,0 +1,11 @@
+<div *ngIf="toastService.toast$ | async as toast" class="snackbar-container" [class.toast-success]="toast.type === 'success'" [class.toast-error]="toast.type === 'error'" [class.toast-info]="toast.type === 'info'">
+  <span class="toast-icon">
+    <ng-container [ngSwitch]="toast.type">
+      <span *ngSwitchCase="'success'">✓</span>
+      <span *ngSwitchCase="'error'">✕</span>
+      <span *ngSwitchDefault>ℹ</span>
+    </ng-container>
+  </span>
+  <span class="toast-message">{{ toast.message }}</span>
+  <button class="toast-close" (click)="toastService.clear()">&times;</button>
+</div>

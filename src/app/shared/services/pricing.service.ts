@@ -6,10 +6,15 @@ import { environment } from '../../../environments/environment';
 export interface Pricing {
   id?: number;
   productId: number;
+  pricingModel?: string; // RIDE or HEAVY_EQUIPMENT
+  chargingMethod?: string; // HOURLY, DAILY, HOURLY_DAILY
   basePrice: number;
   perKmPrice: number;
   perMinutePrice: number;
   perHourPrice: number;
+  dailyRate?: number;
+  extraHourRate?: number;
+  discount?: number;
   minimumFare: number;
   minimumHours: number;
   waitingCharge: number;

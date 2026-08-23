@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CustomerService, User } from '../../../shared/services/customer.service';
 
+import { ToastService } from '../../../shared/services/toast.service';
+
 interface Customer {
   id: string;
   name: string;
@@ -25,6 +27,7 @@ interface Customer {
 })
 export class CustomerListComponent implements OnInit {
   private customerService = inject(CustomerService);
+  private toastService = inject(ToastService);
 
   totalCustomers = 0;
   activeCustomers = 0;
@@ -87,11 +90,12 @@ export class CustomerListComponent implements OnInit {
         if (response.success && response.data) {
           this.customers = response.data.map(u => this.mapUserToCustomer(u));
           this.calculateStats();
+          this.toastService.showSuccess('✓ Customer data refreshed.');
         }
       },
       error: (err) => {
         this.isRefreshing = false;
-        console.error('Error refreshing customers:', err);
+        this.toastService.showError('Error refreshing customer data');
       }
     });
   }
@@ -122,7 +126,7 @@ export class CustomerListComponent implements OnInit {
 
   exportToExcel(): void {
     if (this.filteredCustomers.length === 0) {
-      alert('No data to export');
+      this.toastService.showError('No data to export.');
       return;
     }
 
@@ -174,6 +178,8 @@ export class CustomerListComponent implements OnInit {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    this.toastService.showSuccess('✓ Customer data exported to CSV.');
   }
 
   private mapUserToCustomer(user: User): Customer {
@@ -217,7 +223,6 @@ export class CustomerListComponent implements OnInit {
   get filteredCustomers(): Customer[] {
     let result = this.customers;
 
-    // 1. Text Search Query
     if (this.searchQuery.trim()) {
       const q = this.searchQuery.toLowerCase();
       result = result.filter(c =>
@@ -228,19 +233,16 @@ export class CustomerListComponent implements OnInit {
       );
     }
 
-    // 2. Status Filter
     if (this.selectedStatusFilter !== 'All') {
       result = result.filter(c => c.status === this.selectedStatusFilter);
     }
 
-    // 3. Date Joined Filter
     if (this.selectedDateFilter !== 'All') {
       const now = new Date();
       result = result.filter(c => {
         if (!c.joinDate) return false;
         const joinDate = new Date(c.joinDate);
         
-        // Calculate difference in days
         const diffTime = Math.abs(now.getTime() - joinDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
@@ -251,7 +253,7 @@ export class CustomerListComponent implements OnInit {
         } else if (this.selectedDateFilter === 'ThisMonth') {
           return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear();
         } else if (this.selectedDateFilter === 'Custom') {
-          if (!this.appliedFromDate && !this.appliedToDate) return true; // Show all if no custom range applied yet
+          if (!this.appliedFromDate && !this.appliedToDate) return true;
           
           const joinTime = joinDate.getTime();
           
@@ -285,7 +287,7 @@ export class CustomerListComponent implements OnInit {
   }
 
   openEditModal(customer: Customer, event: Event): void {
-    event.stopPropagation(); // Prevent navigating to profile page
+    event.stopPropagation();
     this.modalTitle = 'Edit Customer';
     this.editingCustomer = customer;
     this.customerName = customer.name;
@@ -295,7 +297,7 @@ export class CustomerListComponent implements OnInit {
     this.customerStatus = customer.status;
     this.customerWalletBalance = customer.walletBalance;
     this.customerTotalBookings = customer.totalBookings;
-    this.customerPassword = ''; // Keep password blank unless changing
+    this.customerPassword = '';
     this.isModalOpen = true;
   }
 
@@ -316,7 +318,7 @@ export class CustomerListComponent implements OnInit {
 
   onSubmit(): void {
     if (!this.customerName || !this.customerPhone) {
-      alert('Name and Contact Number are required!');
+      this.toastService.showError('Name and Contact Number are required!');
       return;
     }
 
@@ -338,34 +340,34 @@ export class CustomerListComponent implements OnInit {
       next: (response) => {
         this.isSaving = false;
         if (response.success) {
+          this.toastService.showSuccess('✓ Customer saved successfully!');
           this.loadCustomers();
           this.closeModal();
         } else {
-          alert('Failed to save customer: ' + response.message);
+          this.toastService.showError('Failed to save customer: ' + response.message);
         }
       },
       error: (err) => {
         this.isSaving = false;
-        console.error('Error saving customer:', err);
-        alert(err.error?.message || 'Error occurred while saving customer');
+        this.toastService.showError(err.error?.message || 'Error occurred while saving customer');
       }
     });
   }
 
   deleteCustomer(id: string, event: Event): void {
-    event.stopPropagation(); // Prevent navigating to profile page
+    event.stopPropagation();
     if (confirm('Are you sure you want to delete this customer?')) {
       this.customerService.deleteCustomerById(Number(id)).subscribe({
         next: (response) => {
           if (response.success) {
+            this.toastService.showSuccess('✓ Customer deleted successfully.');
             this.loadCustomers();
           } else {
-            alert('Failed to delete customer: ' + response.message);
+            this.toastService.showError('Failed to delete customer: ' + response.message);
           }
         },
         error: (err) => {
-          console.error('Error deleting customer:', err);
-          alert(err.error?.message || 'Error occurred while deleting customer');
+          this.toastService.showError(err.error?.message || 'Error occurred while deleting customer');
         }
       });
     }

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { BookingService, Booking } from '../../../shared/services/booking.service';
 import { ProductService, Product } from '../../../shared/services/product.service';
 import { PartnerService } from '../../../shared/services/partner.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-booking-list',
@@ -18,6 +19,7 @@ export class BookingListComponent implements OnInit {
   private productService = inject(ProductService);
   private partnerService = inject(PartnerService);
   private router = inject(Router);
+  private toastService = inject(ToastService);
 
   bookings: Booking[] = [];
   products: Product[] = [];
@@ -106,12 +108,12 @@ export class BookingListComponent implements OnInit {
     ).subscribe({
       next: (res) => {
         if (res.success) {
-          alert('Assignment updated successfully');
+          this.toastService.showSuccess('✓ Assignment updated successfully');
           this.closeAssignModal();
           this.loadData();
         }
       },
-      error: (err) => alert(err.error?.message || 'Assignment failed')
+      error: (err) => this.toastService.showError(err.error?.message || 'Assignment failed')
     });
   }
 
@@ -120,11 +122,11 @@ export class BookingListComponent implements OnInit {
     this.bookingService.updateBookingStatus(booking.id, newStatus).subscribe({
       next: (res) => {
         if (res.success) {
-          alert(`Status updated to ${newStatus}`);
+          this.toastService.showSuccess(`✓ Booking status updated to ${newStatus}`);
           this.loadData();
         }
       },
-      error: (err) => alert(err.error?.message || 'Status transition invalid')
+      error: (err) => this.toastService.showError(err.error?.message || 'Status transition invalid')
     });
   }
 }

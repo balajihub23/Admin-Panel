@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { PricingService, Pricing } from '../../../shared/services/pricing.service';
 import { ProductService, Product } from '../../../shared/services/product.service';
 
+import { ActivatedRoute } from '@angular/router';
+import { ToastService } from '../../../shared/services/toast.service';
+
 @Component({
   selector: 'app-pricing-list',
   standalone: true,
@@ -14,11 +17,16 @@ import { ProductService, Product } from '../../../shared/services/product.servic
 export class PricingListComponent implements OnInit {
   private pricingService = inject(PricingService);
   private productService = inject(ProductService);
+  private route = inject(ActivatedRoute);
+  private toastService = inject(ToastService);
 
   pricings: Pricing[] = [];
+  displayedPricings: Pricing[] = [];
   products: Product[] = [];
+  filterProductId: number | null = null;
 
   showModal = false;
+  isSaving = false;
   editingPricing: Pricing = this.initPricing();
   selectedProduct: Product | null = null;
 
@@ -31,6 +39,7 @@ export class PricingListComponent implements OnInit {
       next: (res) => {
         if (res.success) {
           this.products = res.data || [];
+          this.checkQueryParams();
         }
       }
     });
@@ -39,7 +48,29 @@ export class PricingListComponent implements OnInit {
       next: (res) => {
         if (res.success) {
           this.pricings = res.data || [];
+          this.applyFilter();
         }
+      }
+    });
+  }
+
+  applyFilter(): void {
+    if (this.filterProductId) {
+      this.displayedPricings = this.pricings.filter(pr => pr.productId === this.filterProductId);
+    } else {
+      this.displayedPricings = [...this.pricings];
+    }
+  }
+
+  checkQueryParams(): void {
+    this.route.queryParams.subscribe(params => {
+      const pid = params['productId'];
+      if (pid) {
+        this.filterProductId = Number(pid);
+        this.applyFilter();
+      } else {
+        this.filterProductId = null;
+        this.applyFilter();
       }
     });
   }
@@ -47,10 +78,15 @@ export class PricingListComponent implements OnInit {
   initPricing(): Pricing {
     return {
       productId: 0,
+      pricingModel: 'HEAVY_EQUIPMENT',
+      chargingMethod: 'HOURLY_DAILY',
       basePrice: 0,
       perKmPrice: 0,
       perMinutePrice: 0,
       perHourPrice: 0,
+      dailyRate: 0,
+      extraHourRate: 0,
+      discount: 0,
       minimumFare: 0,
       minimumHours: 0,
       waitingCharge: 0,
@@ -71,7 +107,9 @@ export class PricingListComponent implements OnInit {
 
   getProductType(productId: number): string {
     const p = this.products.find(prod => prod.id === productId);
-    return p ? (p.productType || 'JCB') : 'JCB';
+    const pType = (p?.productType || '').toUpperCase();
+    if (pType === 'HEAVY_EQUIPMENT' || pType === 'JCB' || pType === 'EXCAVATOR' || pType === 'CRANE') return 'Heavy Equipment';
+    return 'Ride';
   }
 
   isJcbType(): boolean {
@@ -83,6 +121,9 @@ export class PricingListComponent implements OnInit {
   onProductChange(): void {
     const p = this.products.find(prod => prod.id === Number(this.editingPricing.productId));
     this.selectedProduct = p || null;
+    if (this.selectedProduct) {
+      this.editingPricing.pricingModel = this.isJcbType() ? 'HEAVY_EQUIPMENT' : 'RIDE';
+    }
   }
 
   openCreateModal(): void {
@@ -106,18 +147,25 @@ export class PricingListComponent implements OnInit {
 
   savePricing(): void {
     if (!this.editingPricing.productId) {
-      alert('Please select a product');
+      this.toastService.showError('Please select a product.');
       return;
     }
+    this.isSaving = true;
     this.pricingService.savePricing(this.editingPricing).subscribe({
       next: (res) => {
+        this.isSaving = false;
         if (res.success) {
-          alert('Pricing configuration saved successfully');
+          this.toastService.showSuccess('✓ Pricing configuration saved successfully!');
           this.closeModal();
           this.loadData();
+        } else {
+          this.toastService.showError(res.message || 'Failed to save pricing configuration');
         }
       },
-      error: (err) => alert(err.error?.message || 'Failed to save pricing')
+      error: (err) => {
+        this.isSaving = false;
+        this.toastService.showError(err.error?.message || 'Failed to save pricing configuration');
+      }
     });
   }
 }

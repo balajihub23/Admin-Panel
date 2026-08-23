@@ -7,9 +7,10 @@ export interface Product {
   id?: number;
   name: string;
   code: string;
-  productType: string; // JCB, HEAVY_EQUIPMENT, BIKE, AUTO, CAR
+  productType: string; // HEAVY_EQUIPMENT or RIDE
   category?: string;
   description?: string;
+  imageUrl?: string;
   active?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -32,6 +33,12 @@ export class ProductService {
 
   saveProduct(product: Product): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/api/v1/products`, product);
+  }
+
+  uploadProductImages(productId: number, files: File[]): Observable<any> {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    return this.http.post<any>(`${this.baseUrl}/api/v1/products/${productId}/upload-images`, formData);
   }
 
   deleteProduct(id: number): Observable<any> {

@@ -1,10 +1,10 @@
 <div class="pricing-container">
   <div class="page-header">
     <div>
-      <h2>Pricing Engine Management</h2>
-      <p class="subtitle">Set up custom pricing rules for JCB equipment and ride hailing</p>
+      <h2>Pricing Configuration Management</h2>
+      <p class="subtitle">Set up distinct pricing rules for Heavy Equipment and Ride Hailing products</p>
     </div>
-    <button class="btn-primary" (click)="openCreateModal()">+ Set Pricing Rule</button>
+    <button class="btn-primary" (click)="openCreateModal()">+ Add Pricing Rule</button>
   </div>
 
   <div class="table-card">
@@ -12,56 +12,58 @@
       <thead>
         <tr>
           <th>Product</th>
-          <th>Model Type</th>
-          <th>Base Price / Fare</th>
-          <th>Per KM</th>
-          <th>Per Hour / Min</th>
-          <th>Min Fare / Hours</th>
+          <th>Pricing Model</th>
+          <th>Primary Rates</th>
+          <th>Trans / KM Rate</th>
+          <th>Min Charge</th>
           <th>Operator / Booking Fee</th>
-          <th>Tax %</th>
+          <th>Tax / Discount</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let pr of pricings">
+        <tr *ngFor="let pr of displayedPricings">
           <td><strong>{{ getProductName(pr.productId) }}</strong></td>
           <td>
-            <span class="badge" [class.badge-jcb]="getProductType(pr.productId) === 'JCB'" [class.badge-ride]="getProductType(pr.productId) !== 'JCB'">
+            <span class="badge" [class.badge-jcb]="getProductType(pr.productId) === 'Heavy Equipment'" [class.badge-ride]="getProductType(pr.productId) !== 'Heavy Equipment'">
               {{ getProductType(pr.productId) }}
             </span>
           </td>
-          <td>₹{{ pr.basePrice }}</td>
+          <td>
+            <span *ngIf="getProductType(pr.productId) === 'Heavy Equipment'">
+              ₹{{ pr.perHourPrice }}/hr <span *ngIf="pr.dailyRate">&bull; ₹{{ pr.dailyRate }}/day</span>
+            </span>
+            <span *ngIf="getProductType(pr.productId) !== 'Heavy Equipment'">
+              Base: ₹{{ pr.basePrice }} &bull; ₹{{ pr.perMinutePrice }}/min
+            </span>
+          </td>
           <td>₹{{ pr.perKmPrice }} / km</td>
           <td>
-            <span *ngIf="getProductType(pr.productId) === 'JCB'">₹{{ pr.perHourPrice }} / hr</span>
-            <span *ngIf="getProductType(pr.productId) !== 'JCB'">₹{{ pr.perMinutePrice }} / min</span>
+            <span *ngIf="getProductType(pr.productId) === 'Heavy Equipment'">{{ pr.minimumHours }} hrs min</span>
+            <span *ngIf="getProductType(pr.productId) !== 'Heavy Equipment'">₹{{ pr.minimumFare }} min fare</span>
           </td>
           <td>
-            <span *ngIf="getProductType(pr.productId) === 'JCB'">{{ pr.minimumHours }} hrs min</span>
-            <span *ngIf="getProductType(pr.productId) !== 'JCB'">₹{{ pr.minimumFare }} min fare</span>
+            <span *ngIf="getProductType(pr.productId) === 'Heavy Equipment'">₹{{ pr.operatorCharge }} (Operator)</span>
+            <span *ngIf="getProductType(pr.productId) !== 'Heavy Equipment'">₹{{ pr.bookingFee }} (Booking Fee)</span>
           </td>
+          <td>{{ pr.taxPercentage }}% Tax <span *ngIf="pr.discount">(-₹{{ pr.discount }})</span></td>
           <td>
-            <span *ngIf="getProductType(pr.productId) === 'JCB'">₹{{ pr.operatorCharge }} (Op Charge)</span>
-            <span *ngIf="getProductType(pr.productId) !== 'JCB'">₹{{ pr.bookingFee }} (Booking Fee)</span>
-          </td>
-          <td>{{ pr.taxPercentage }}%</td>
-          <td>
-            <button class="btn-sm btn-outline" (click)="openEditModal(pr)">Edit Rule</button>
+            <button class="btn-sm btn-outline" (click)="openEditModal(pr)">Edit Pricing</button>
           </td>
         </tr>
         <tr *ngIf="pricings.length === 0">
-          <td colspan="9" class="empty-state">No pricing configurations established.</td>
+          <td colspan="8" class="empty-state">No pricing configurations established yet.</td>
         </tr>
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- Modal Form with Dynamic Field Rendering -->
+<!-- Modal Form with Isolated JCB vs Ride Pricing Rules -->
 <div class="modal-overlay" *ngIf="showModal">
-  <div class="modal-card">
+  <div class="modal-card" style="max-width:620px;">
     <div class="modal-header">
-      <h3>{{ editingPricing.id ? 'Edit Pricing Rule' : 'Add Pricing Rule' }}</h3>
+      <h3>{{ editingPricing.id ? 'Configure Pricing Rule' : 'Add New Pricing Rule' }}</h3>
       <button class="close-btn" (click)="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
@@ -69,72 +71,127 @@
         <label>Select Product *</label>
         <select [(ngModel)]="editingPricing.productId" (change)="onProductChange()" class="form-control">
           <option *ngFor="let prod of products" [value]="prod.id">
-            {{ prod.name }} ({{ prod.productType }})
+            {{ prod.name }} ({{ prod.productType === 'HEAVY_EQUIPMENT' ? 'Heavy Equipment' : 'Ride' }})
           </option>
         </select>
       </div>
 
-      <!-- Dynamic JCB / Heavy Equipment Fields -->
-      <div *ngIf="isJcbType()" class="pricing-fields-grid">
-        <div class="form-group">
-          <label>Base Price (₹)</label>
-          <input type="number" [(ngModel)]="editingPricing.basePrice" class="form-control" />
+      <div class="pricing-model-badge" style="background:#f1f5f9; padding:8px 12px; border-radius:6px; margin-bottom:14px; font-weight:600; font-size:0.85rem; color:#334155;">
+        Pricing Model: <span [style.color]="isJcbType() ? '#d97706' : '#2563eb'">{{ isJcbType() ? 'JCB / Heavy Equipment Pricing' : 'Ride (Uber/Rapido) Pricing' }}</span>
+      </div>
+
+      <!-- HEAVY EQUIPMENT PRICING UI -->
+      <div *ngIf="isJcbType()" class="pricing-fields-grid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">
+        <div class="form-group" style="grid-column: span 2;">
+          <label>Charging Method</label>
+          <select [(ngModel)]="editingPricing.chargingMethod" class="form-control">
+            <option value="HOURLY_DAILY">Hourly + Daily</option>
+            <option value="HOURLY">Hourly Only</option>
+            <option value="DAILY">Daily Only</option>
+          </select>
+          <span class="field-hint">Billing model: hourly work, full day shift, or both.</span>
         </div>
         <div class="form-group">
-          <label>Hourly Rate (₹/hour)</label>
-          <input type="number" [(ngModel)]="editingPricing.perHourPrice" class="form-control" />
+          <label>Hourly Rate (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.perHourPrice" class="form-control" placeholder="1200" />
+          <span class="field-hint">Base hourly machine operational rate (e.g. ₹400/hr).</span>
         </div>
         <div class="form-group">
-          <label>Minimum Hours Required</label>
-          <input type="number" [(ngModel)]="editingPricing.minimumHours" class="form-control" />
+          <label>Daily Rate (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.dailyRate" class="form-control" placeholder="8000" />
+          <span class="field-hint">Flat rate for full 8-hour shift (e.g. ₹1500/day).</span>
         </div>
         <div class="form-group">
-          <label>Per KM Rate (₹/km)</label>
-          <input type="number" [(ngModel)]="editingPricing.perKmPrice" class="form-control" />
+          <label>Minimum Shift Hours</label>
+          <input type="number" [(ngModel)]="editingPricing.minimumHours" class="form-control" placeholder="4" />
+          <span class="field-hint">Min billable hours enforced per job (e.g. 5 hrs).</span>
         </div>
         <div class="form-group">
-          <label>Operator / Driver Charge (₹)</label>
-          <input type="number" [(ngModel)]="editingPricing.operatorCharge" class="form-control" />
+          <label>Extra Hour Rate (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.extraHourRate" class="form-control" placeholder="1200" />
+          <span class="field-hint">Overtime charge per hour beyond minimum shift.</span>
         </div>
         <div class="form-group">
-          <label>Waiting Charge (₹/hour)</label>
-          <input type="number" [(ngModel)]="editingPricing.waitingCharge" class="form-control" />
+          <label>Per KM Transportation Charge (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.perKmPrice" class="form-control" placeholder="50" />
+          <span class="field-hint">Equipment transit / mobilization rate per KM (e.g. ₹40/km).</span>
+        </div>
+        <div class="form-group">
+          <label>Operator Charge (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.operatorCharge" class="form-control" placeholder="500" />
+          <span class="field-hint">Flat fee for certified machine operator/driver.</span>
+        </div>
+        <div class="form-group">
+          <label>Waiting Charge / Hour (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.waitingCharge" class="form-control" placeholder="200" />
+          <span class="field-hint">Site delay / idle machine waiting fee per hour.</span>
+        </div>
+        <div class="form-group">
+          <label>Base Price / Inspection (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.basePrice" class="form-control" placeholder="0" />
+          <span class="field-hint">One-time base booking / site inspection charge.</span>
         </div>
       </div>
 
-      <!-- Dynamic Bike / Auto / Car Uber-style Fields -->
-      <div *ngIf="!isJcbType()" class="pricing-fields-grid">
+      <!-- RIDE PRICING UI (Uber / Rapido) -->
+      <div *ngIf="!isJcbType()" class="pricing-fields-grid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">
         <div class="form-group">
           <label>Base Fare (₹)</label>
-          <input type="number" [(ngModel)]="editingPricing.basePrice" class="form-control" />
+          <input type="number" [(ngModel)]="editingPricing.basePrice" class="form-control" placeholder="40" />
+          <span class="field-hint">Initial fixed pickup fare for trip start.</span>
         </div>
         <div class="form-group">
           <label>Per KM Rate (₹/km)</label>
-          <input type="number" [(ngModel)]="editingPricing.perKmPrice" class="form-control" />
+          <input type="number" [(ngModel)]="editingPricing.perKmPrice" class="form-control" placeholder="12" />
+          <span class="field-hint">Distance rate charged per kilometer traveled.</span>
         </div>
         <div class="form-group">
           <label>Per Minute Rate (₹/min)</label>
-          <input type="number" [(ngModel)]="editingPricing.perMinutePrice" class="form-control" />
+          <input type="number" [(ngModel)]="editingPricing.perMinutePrice" class="form-control" placeholder="2" />
+          <span class="field-hint">Time rate charged per minute in transit.</span>
         </div>
         <div class="form-group">
           <label>Minimum Fare (₹)</label>
-          <input type="number" [(ngModel)]="editingPricing.minimumFare" class="form-control" />
+          <input type="number" [(ngModel)]="editingPricing.minimumFare" class="form-control" placeholder="50" />
+          <span class="field-hint">Minimum total trip charge applied to short rides.</span>
         </div>
         <div class="form-group">
           <label>Booking Fee (₹)</label>
-          <input type="number" [(ngModel)]="editingPricing.bookingFee" class="form-control" />
+          <input type="number" [(ngModel)]="editingPricing.bookingFee" class="form-control" placeholder="10" />
+          <span class="field-hint">Platform convenience & booking service fee.</span>
+        </div>
+        <div class="form-group">
+          <label>Waiting Charge / Minute (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.waitingCharge" class="form-control" placeholder="1" />
+          <span class="field-hint">Driver waiting fee per minute after pickup arrival.</span>
+        </div>
+        <div class="form-group">
+          <label>Cancellation Fee (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.cancellationFee" class="form-control" placeholder="30" />
+          <span class="field-hint">Penalty fee if customer cancels after driver accepts.</span>
         </div>
         <div class="form-group">
           <label>Surge Multiplier</label>
-          <input type="number" step="0.1" [(ngModel)]="editingPricing.surgeMultiplier" class="form-control" />
+          <input type="number" step="0.1" [(ngModel)]="editingPricing.surgeMultiplier" class="form-control" placeholder="1.0" />
+          <span class="field-hint">Peak demand multiplier (1.0 = standard rate).</span>
         </div>
       </div>
 
-      <div class="pricing-fields-grid">
+      <div class="pricing-fields-grid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-top:12px;">
         <div class="form-group">
           <label>Tax Percentage (%)</label>
-          <input type="number" [(ngModel)]="editingPricing.taxPercentage" class="form-control" />
+          <input type="number" [(ngModel)]="editingPricing.taxPercentage" class="form-control" placeholder="18" />
+          <span class="field-hint">Applicable GST / Service Tax percentage.</span>
         </div>
+        <div class="form-group">
+          <label>Discount Amount (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.discount" class="form-control" placeholder="0" />
+          <span class="field-hint">Flat coupon or promo discount deduction.</span>
+        </div>
+      </div>
+
+      <div class="form-group checkbox-group" style="margin-top:12px;">
+        <label><input type="checkbox" [(ngModel)]="editingPricing.active" /> Active Pricing Rule</label>
       </div>
     </div>
     <div class="modal-footer">
