@@ -1,0 +1,144 @@
+<div class="booking-container">
+  <div class="page-header">
+    <div>
+      <h2>Booking Management</h2>
+      <p class="subtitle">Monitor transactions, assign contractors/drivers, and update status</p>
+    </div>
+    <button class="btn-primary" (click)="createNewBooking()">+ Create Booking</button>
+  </div>
+
+  <div class="controls-card">
+    <div class="filter-group">
+      <label>Status Filter:</label>
+      <select [(ngModel)]="statusFilter" class="form-control-inline">
+        <option value="ALL">All Statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="CONFIRMED">Confirmed</option>
+        <option value="ASSIGNED">Assigned</option>
+        <option value="ACCEPTED">Accepted</option>
+        <option value="STARTED">Started</option>
+        <option value="IN_PROGRESS">In Progress</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="CANCELLED">Cancelled</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Booking #</th>
+          <th>Product</th>
+          <th>Date & Time</th>
+          <th>Distance / Hours</th>
+          <th>Total Amount</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let b of filteredBookings()">
+          <td>
+            <strong>{{ b.bookingNumber }}</strong>
+          </td>
+          <td>{{ getProductName(b.productId) }}</td>
+          <td>{{ b.bookingDate || '-' }} {{ b.bookingTime || '' }}</td>
+          <td>{{ b.distanceKm || 0 }} km / {{ b.durationHours || 0 }} hrs</td>
+          <td><strong class="price">₹{{ b.totalAmount }}</strong></td>
+          <td>
+            <span class="status-pill" [class]="b.status?.toLowerCase()">{{ b.status }}</span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-sm btn-outline" (click)="viewDetails(b)">Details</button>
+              <button class="btn-sm btn-outline" (click)="openAssignModal(b)">Assign</button>
+              <select #statusSelect (change)="updateStatus(b, statusSelect.value)" class="select-status-sm">
+                <option value="" disabled selected>Update Status</option>
+                <option value="CONFIRMED" *ngIf="b.status === 'PENDING'">Confirm</option>
+                <option value="ASSIGNED" *ngIf="b.status === 'CONFIRMED'">Assign</option>
+                <option value="ACCEPTED" *ngIf="b.status === 'ASSIGNED'">Accept</option>
+                <option value="STARTED" *ngIf="b.status === 'ACCEPTED'">Start</option>
+                <option value="IN_PROGRESS" *ngIf="b.status === 'STARTED'">In Progress</option>
+                <option value="COMPLETED" *ngIf="b.status === 'STARTED' || b.status === 'IN_PROGRESS'">Complete</option>
+                <option value="CANCELLED" *ngIf="b.status !== 'COMPLETED' && b.status !== 'CANCELLED'">Cancel</option>
+              </select>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="filteredBookings().length === 0">
+          <td colspan="7" class="empty-state">No bookings found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Booking Details Modal -->
+<div class="modal-overlay" *ngIf="showDetailModal && selectedBooking">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Booking Details — {{ selectedBooking.bookingNumber }}</h3>
+      <button class="close-btn" (click)="closeDetailModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-grid">
+        <div><strong>Status:</strong> <span class="status-pill" [class]="selectedBooking.status?.toLowerCase()">{{ selectedBooking.status }}</span></div>
+        <div><strong>Payment Status:</strong> {{ selectedBooking.paymentStatus }}</div>
+        <div><strong>Product:</strong> {{ getProductName(selectedBooking.productId) }}</div>
+        <div><strong>Date/Time:</strong> {{ selectedBooking.bookingDate }} {{ selectedBooking.bookingTime }}</div>
+        <div><strong>Duration:</strong> {{ selectedBooking.durationHours }} Hours</div>
+        <div><strong>Distance:</strong> {{ selectedBooking.distanceKm }} KM</div>
+      </div>
+
+      <h4 class="section-title">Frozen Price Snapshot</h4>
+      <div class="price-snapshot-box" *ngIf="selectedBooking">
+        <div class="snapshot-row"><span>Base Amount:</span> ₹{{ selectedBooking.baseAmount || 0 }}</div>
+        <div class="snapshot-row" *ngIf="selectedBooking.timeAmount && selectedBooking.timeAmount > 0"><span>Time Amount:</span> ₹{{ selectedBooking.timeAmount }}</div>
+        <div class="snapshot-row" *ngIf="selectedBooking.distanceAmount && selectedBooking.distanceAmount > 0"><span>Distance Amount:</span> ₹{{ selectedBooking.distanceAmount }}</div>
+        <div class="snapshot-row" *ngIf="selectedBooking.operatorAmount && selectedBooking.operatorAmount > 0"><span>Operator Amount:</span> ₹{{ selectedBooking.operatorAmount }}</div>
+        <div class="snapshot-row" *ngIf="selectedBooking.bookingFee && selectedBooking.bookingFee > 0"><span>Booking Fee:</span> ₹{{ selectedBooking.bookingFee }}</div>
+        <div class="snapshot-row"><span>Tax Amount:</span> ₹{{ selectedBooking.taxAmount || 0 }}</div>
+        <div class="snapshot-row total"><span>Total Amount Paid/Due:</span> ₹{{ selectedBooking.totalAmount || 0 }}</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeDetailModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Contractor / Driver Modal -->
+<div class="modal-overlay" *ngIf="showAssignModal && selectedBooking">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Assign Booking — {{ selectedBooking.bookingNumber }}</h3>
+      <button class="close-btn" (click)="closeAssignModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Contractor</label>
+        <select [(ngModel)]="assignContractorId" class="form-control">
+          <option [ngValue]="null">-- None / Direct Driver --</option>
+          <option *ngFor="let c of contractors" [ngValue]="c.id">
+            {{ c.fullName }} ({{ c.companyName || c.phone }})
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Driver</label>
+        <select [(ngModel)]="assignDriverId" class="form-control">
+          <option [ngValue]="null">-- Unassigned Driver --</option>
+          <option *ngFor="let d of drivers" [ngValue]="d.id">
+            {{ d.fullName }} ({{ d.phone }})
+          </option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeAssignModal()">Cancel</button>
+      <button class="btn-primary" (click)="saveAssignment()">Save Assignment</button>
+    </div>
+  </div>
+</div>

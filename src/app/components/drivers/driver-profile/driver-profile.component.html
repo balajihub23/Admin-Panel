@@ -75,13 +75,10 @@
         <div *ngIf="documents.length === 0" class="text-muted" style="font-size: 12px;">
           No verification files uploaded.
         </div>
-        <div *ngFor="let doc of documents" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-          <span style="font-size: 12px; color: #475569; font-weight: 500;">
-            {{ doc.documentType.replace('_', ' ') }}
-          </span>
-          <a [href]="getDownloadUrl(doc)" target="_blank" style="font-size: 11px; color: var(--primary, #ff9800); font-weight: 600; text-decoration: underline;">
-            Download
-          </a>
+        <div class="doc-badges" style="display:flex; flex-direction:column; gap:8px;" *ngIf="documents.length > 0">
+          <button class="doc-badge-btn" *ngFor="let doc of documents" (click)="openDocumentPreview(doc)">
+            📄 {{ formatDocumentTypeName(doc.documentType) }}
+          </button>
         </div>
       </div>
 
@@ -103,7 +100,7 @@
       <div class="stats-grid">
         <div class="stat-card premium-card">
           <span class="stat-title">Total Jobs</span>
-          <span class="stat-value">{{completedJobs}}</span>
+          <span class="stat-value">{{totalJobsCount}}</span>
         </div>
         <div class="stat-card premium-card">
           <span class="stat-title">Wallet Balance</span>
@@ -111,7 +108,7 @@
         </div>
         <div class="stat-card premium-card">
           <span class="stat-title">Total Earnings</span>
-          <span class="stat-value">₹{{driver.totalEarnings | number:'1.0-0'}}</span>
+          <span class="stat-value">₹{{totalEarnings | number:'1.0-0'}}</span>
         </div>
         <div class="stat-card premium-card double-height">
           <span class="stat-title">Job Stats</span>
@@ -121,48 +118,91 @@
               <span class="lbl">Completed</span>
             </div>
             <div class="breakdown-item text-danger">
-              <span class="num">{{cancelledJobs | number:'2.0-0'}}</span>
+              <span class="num">{{cancelledJobs}}</span>
               <span class="lbl">Cancelled</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Job History Table -->
+      <!-- Job History Table with Pagination -->
       <div class="table-container premium-card">
         <div class="table-header">
-          <h3>Job History</h3>
+          <h3>Job History ({{jobs.length}})</h3>
         </div>
         <table class="data-table">
           <thead>
             <tr>
-              <th>Job ID</th>
+              <th>Booking #</th>
               <th>Date</th>
-              <th>Customer</th>
-              <th>Duration</th>
-              <th>Earnings</th>
+              <th>Customer ID</th>
+              <th>Amount</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let job of jobs">
-              <td class="text-muted">{{job.id}}</td>
-              <td>{{job.date}}</td>
-              <td>{{job.customer}}</td>
-              <td>{{job.duration}}</td>
-              <td>₹{{job.earnings | number}}</td>
+            <tr *ngFor="let job of paginatedJobs()">
+              <td class="text-muted">#{{job.bookingNumber || job.id}}</td>
+              <td>{{job.bookingDate || (job.createdAt | date:'yyyy-MM-dd')}}</td>
+              <td>Customer #{{job.customerId || '-'}}</td>
+              <td>₹{{(job.driverAmount || job.totalAmount || 0) | number}}</td>
               <td>
-                <span class="status-badge" [ngClass]="{'status-active': job.status === 'Completed', 'status-suspended': job.status === 'Cancelled'}">
+                <span class="status-badge" [ngClass]="{'status-active': job.status === 'COMPLETED', 'status-suspended': job.status === 'CANCELLED'}">
                   {{job.status}}
                 </span>
               </td>
             </tr>
             <tr *ngIf="jobs.length === 0">
-              <td colspan="6" class="text-center text-muted" style="padding: 2rem;">No jobs registered yet.</td>
+              <td colspan="5" class="text-center text-muted" style="padding: 2rem;">No job history records found for this driver.</td>
             </tr>
           </tbody>
         </table>
+
+        <!-- Pagination Bar -->
+        <div class="pagination-bar" style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-top:1px solid #f1f5f9; background:#fff;">
+          <div style="font-size:0.85rem; color:#475569; border:1px solid #e2e8f0; padding:4px 12px; border-radius:16px;">
+            Total : <strong>{{ jobs.length }}</strong>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button (click)="previousJobPage()" [disabled]="jobPage === 1" style="background:transparent; border:none; color:#64748b; cursor:pointer; padding:4px 8px;">&larr; Previous</button>
+            <span style="font-size:0.85rem; font-weight:600; color:#0f172a;">Page {{ jobPage }} of {{ totalJobPages }}</span>
+            <button (click)="nextJobPage()" [disabled]="jobPage === totalJobPages" style="background:transparent; border:none; color:#64748b; cursor:pointer; padding:4px 8px;">Next &rarr;</button>
+          </div>
+        </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Document Preview & Download Modal Popup -->
+<div class="modal-overlay" *ngIf="showDocumentPreviewModal && selectedDocumentForPreview">
+  <div class="modal-card preview-modal">
+    <div class="modal-header">
+      <div>
+        <h3>{{ formatDocumentTypeName(selectedDocumentForPreview.documentType) }}</h3>
+        <p class="modal-subtitle">Submitted by <strong>{{ driver?.fullName }}</strong></p>
+      </div>
+      <button class="close-btn" (click)="closeDocumentPreview()">&times;</button>
+    </div>
+    
+    <div class="modal-body preview-body">
+      <div class="preview-container" *ngIf="isImageDocument(selectedDocumentForPreview); else pdfPreview">
+        <img [src]="getDownloadUrl(selectedDocumentForPreview)" alt="Document Preview" class="doc-img-preview" />
+      </div>
+      <ng-template #pdfPreview>
+        <div class="file-icon-box">
+          <div class="file-icon">📄</div>
+          <span class="file-name-text">{{ selectedDocumentForPreview.fileName }}</span>
+          <span class="file-type-badge">{{ selectedDocumentForPreview.fileType || 'Document File' }}</span>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="modal-footer" style="padding:16px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:12px;">
+      <button class="btn-secondary" (click)="closeDocumentPreview()" style="padding:8px 16px; border-radius:6px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;">Close</button>
+      <button class="btn-primary btn-download" (click)="downloadSelectedDocument()" style="padding:8px 16px; border-radius:6px; background:#16a34a; color:#fff; border:none; font-weight:600; cursor:pointer;">
+        ⬇ Download Document
+      </button>
     </div>
   </div>
 </div>

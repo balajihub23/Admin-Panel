@@ -1,0 +1,548 @@
+<div class="partner-container">
+  
+  <!-- ==================== MAIN VIEW ==================== -->
+  <div *ngIf="viewMode === 'LIST'">
+    <div class="page-header">
+      <div class="header-info">
+        <h2>Partner Management</h2>
+        <p class="subtitle">Manage all registered partners, contractors, and drivers</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-queue" (click)="toggleViewMode('QUEUE')">
+          <span class="queue-icon">⏱</span> Verification Queue
+          <span class="badge-count" *ngIf="stats.pendingVerification > 0">{{ stats.pendingVerification }}</span>
+        </button>
+        <button class="btn-primary" (click)="openAddModal()">+ Add Partner</button>
+      </div>
+    </div>
+
+    <!-- Metric Summary Cards (Interactive Filters) -->
+    <div class="metrics-grid">
+      <div class="metric-card clickable" (click)="filterByCard('ALL')" title="Click to view all partners">
+        <span class="metric-title">Total Partners</span>
+        <span class="metric-value blue-text">{{ stats.totalPartners }}</span>
+      </div>
+      <div class="metric-card clickable" (click)="filterByCard('ACTIVE')" title="Click to filter Online/Active partners">
+        <span class="metric-title">Online / Active</span>
+        <span class="metric-value green-text">{{ stats.onlineDrivers }}</span>
+      </div>
+      <div class="metric-card clickable" (click)="filterByCard('BUSY')" title="Click to filter Busy partners">
+        <span class="metric-title">Busy</span>
+        <span class="metric-value dark-text">{{ stats.busyDrivers }}</span>
+      </div>
+      <div class="metric-card clickable" (click)="filterByCard('PENDING_VERIFICATION')" title="Click to filter Pending Verification partners">
+        <span class="metric-title">Pending Verification</span>
+        <span class="metric-value red-text">{{ stats.pendingVerification }}</span>
+      </div>
+    </div>
+
+    <!-- Filter & Search Controls Bar -->
+    <div class="controls-card">
+      <div class="tabs-group">
+        <button class="tab-btn" [class.active]="activeTab === 'ALL'" (click)="setTab('ALL')">All Partners</button>
+        <button class="tab-btn" [class.active]="activeTab === 'CONTRACTOR'" (click)="setTab('CONTRACTOR')">Contractors</button>
+        <button class="tab-btn" [class.active]="activeTab === 'DRIVER'" (click)="setTab('DRIVER')">Drivers</button>
+      </div>
+
+      <div class="filters-group">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onFilterChange()" placeholder="Search by name or email or mobile number...." />
+        </div>
+
+        <input type="date" [(ngModel)]="dateFilter" (ngModelChange)="onFilterChange()" class="filter-select date-select" title="Filter by Registration/Approval Date" />
+
+        <select [(ngModel)]="ratingFilter" (ngModelChange)="onFilterChange()" class="filter-select">
+          <option [ngValue]="0">All Ratings</option>
+          <option [ngValue]="4">4.0+ Stars</option>
+          <option [ngValue]="3">3.0+ Stars</option>
+          <option [ngValue]="2">2.0+ Stars</option>
+        </select>
+
+        <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="filter-select">
+          <option value="ALL">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive / Suspended</option>
+          <option value="PENDING_VERIFICATION">Pending Verification</option>
+          <option value="ONLINE">Online</option>
+          <option value="OFFLINE">Offline</option>
+          <option value="BUSY">Busy</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+
+        <button class="btn-sm btn-outline" *ngIf="statusFilter !== 'ALL' || dateFilter || searchTerm" (click)="resetFilters()">Reset</button>
+      </div>
+    </div>
+
+    <!-- Partners Table -->
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Rating</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of paginatedPartners()">
+            <td>
+              <div class="user-info">
+                <span class="user-name">{{ item.fullName }}</span>
+                <span class="user-sub" *ngIf="item.companyName">{{ item.companyName }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [class.badge-contractor]="item.partnerType === 'CONTRACTOR'" [class.badge-driver]="item.partnerType === 'DRIVER'">
+                {{ item.partnerType }}
+              </span>
+            </td>
+            <td>{{ item.phone }}</td>
+            <td>{{ item.email || '-' }}</td>
+            <td>★ {{ item.rating || '4.0' }}</td>
+            <td>
+              <span class="status-pill" [class]="item.status?.toLowerCase()">{{ item.status }}</span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-sm btn-outline" (click)="navigateToProfile(item)">
+                  View Profile
+                </button>
+                <button class="btn-sm btn-outline" *ngIf="item.partnerType === 'CONTRACTOR'" (click)="viewContractorDetails(item)">
+                  Drivers List
+                </button>
+                <button class="btn-sm btn-outline" *ngIf="item.partnerType === 'DRIVER'" (click)="openAssignModal(item)">
+                  Assign Contractor
+                </button>
+                <button class="btn-sm btn-success" *ngIf="item.status === 'PENDING_VERIFICATION'" (click)="approvePartner(item)" [disabled]="item.isProcessing">
+                  {{ item.isProcessing ? 'Approving...' : 'Approve' }}
+                </button>
+                <button class="btn-sm btn-warning" *ngIf="item.status === 'ACTIVE'" (click)="suspendPartner(item)">
+                  Suspend
+                </button>
+                <button class="btn-sm btn-info" *ngIf="item.status === 'SUSPENDED'" (click)="unsuspendPartner(item)">
+                  Unsuspend
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredPartners().length === 0">
+            <td colspan="7" class="empty-state">No matching partner records found.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Bottom Pagination Bar -->
+      <div class="pagination-bar">
+        <div class="total-badge">
+          Total : <strong>{{ filteredPartners().length }}</strong>
+        </div>
+
+        <div class="pagination-controls">
+          <button class="page-nav-btn" [disabled]="currentPage === 1" (click)="previousPage()">
+            &larr; Previous
+          </button>
+
+          <div class="page-numbers">
+            <button *ngFor="let page of pagesList()"
+                    class="page-num-btn"
+                    [class.active]="currentPage === page"
+                    (click)="goToPage(page)">
+              {{ page }}
+            </button>
+          </div>
+
+          <button class="page-nav-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+            Next &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==================== VERIFICATION QUEUE VIEW (Screenshot 2) ==================== -->
+  <div *ngIf="viewMode === 'QUEUE'">
+    <div class="page-header">
+      <div class="header-info flex-header">
+        <button class="back-btn" (click)="toggleViewMode('LIST')">&larr;</button>
+        <div>
+          <h2>Partner Verification Queue</h2>
+          <p class="subtitle">Review and approve partner applications</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Queue Metric Cards (Clean 3-Metric Summary) -->
+    <div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="metric-card clickable" (click)="filterByCard('PENDING_VERIFICATION')" title="Click to view Pending Applications">
+        <span class="metric-title">Pending Applications</span>
+        <span class="metric-value blue-text">{{ stats.pendingVerification }}</span>
+      </div>
+      <div class="metric-card clickable" (click)="filterByCard('ACTIVE', true)" title="Click to view Applications Approved Today">
+        <span class="metric-title">Approved Today</span>
+        <span class="metric-value green-text">{{ stats.approvedToday }}</span>
+      </div>
+      <div class="metric-card clickable" (click)="filterByCard('REJECTED', true)" title="Click to view Applications Rejected Today">
+        <span class="metric-title">Rejected Today</span>
+        <span class="metric-value dark-text">{{ stats.rejectedToday }}</span>
+      </div>
+    </div>
+
+    <!-- Queue Filter & Controls Bar -->
+    <div class="controls-card" style="margin-bottom: 20px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:0.85rem; font-weight:700; color:#334155;">Queue Filter:</span>
+          <select [(ngModel)]="statusFilter" (ngModelChange)="loadVerificationQueue()" class="filter-select">
+            <option value="PENDING_VERIFICATION">Pending Verification</option>
+            <option value="ACTIVE">Approved / Active</option>
+            <option value="SUSPENDED">Suspended</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="ALL">All Queue Applications</option>
+          </select>
+
+          <input type="date" [(ngModel)]="dateFilter" (ngModelChange)="loadVerificationQueue()" class="filter-select" title="Filter by date" />
+        </div>
+
+        <button *ngIf="statusFilter !== 'PENDING_VERIFICATION' || dateFilter" class="btn-sm btn-outline" (click)="resetFilters()">
+          Reset Queue Filter
+        </button>
+      </div>
+    </div>
+
+    <!-- Verification Applications Cards List -->
+    <div class="queue-list">
+      <div class="queue-card" *ngFor="let item of verificationQueue">
+        <div class="card-header">
+          <div class="partner-meta">
+            <div class="avatar-circle">{{ item.fullName.charAt(0) }}</div>
+            <div>
+              <h3 class="partner-name">{{ item.fullName }}</h3>
+              <span class="partner-code">{{ item.partnerType === 'CONTRACTOR' ? 'CON' : 'DRV' }}-00{{ item.id }}</span>
+              <span class="applied-date">Applied: {{ item.createdAt ? (item.createdAt | date:'yyyy-MM-dd') : '2026-08-23' }}</span>
+            </div>
+          </div>
+          <span class="status-badge" 
+                [ngClass]="{
+                  'orange-badge': item.status === 'PENDING_VERIFICATION',
+                  'green-badge': item.status === 'ACTIVE' || item.status === 'ONLINE',
+                  'red-badge': item.status === 'SUSPENDED' || item.status === 'REJECTED'
+                }">
+            {{ item.status === 'PENDING_VERIFICATION' ? 'Pending Review' : (item.status === 'ACTIVE' ? 'Active / Approved' : item.status) }}
+          </span>
+        </div>
+
+        <div class="card-body">
+          <div class="details-grid">
+            <div>
+              <span class="label">Mobile</span>
+              <span class="val">{{ item.phone }}</span>
+            </div>
+            <div *ngIf="item.licenseNumber">
+              <span class="label">License Number</span>
+              <span class="val">{{ item.licenseNumber }}</span>
+            </div>
+            <div *ngIf="item.companyName">
+              <span class="label">Company Name</span>
+              <span class="val">{{ item.companyName }}</span>
+            </div>
+            <div *ngIf="item.aadhaarNumber">
+              <span class="label">Aadhaar</span>
+              <span class="val">{{ item.aadhaarNumber }}</span>
+            </div>
+            <div>
+              <span class="label">Experience</span>
+              <span class="val">{{ item.experience || '3 years' }}</span>
+            </div>
+          </div>
+
+          <!-- Submitted Documents Section (Click badge to open Preview Popup) -->
+          <div class="documents-section">
+            <h4 class="section-subtitle">Submitted Documents</h4>
+            
+            <div class="doc-badges" *ngIf="item.documents && item.documents.length > 0; else fallbackDocs">
+              <button *ngFor="let doc of item.documents"
+                      class="doc-badge-btn"
+                      (click)="openDocumentPreview(doc, item.fullName)"
+                      title="Click to view & download">
+                📄 {{ formatDocumentTypeName(doc.documentType || doc.fileName) }}
+              </button>
+            </div>
+
+            <ng-template #fallbackDocs>
+              <div class="doc-badges">
+                <span class="doc-badge-muted" *ngIf="item.licenseNumber">📄 Driving License</span>
+                <span class="doc-badge-muted" *ngIf="item.aadhaarNumber">📄 Aadhaar Card</span>
+                <span class="doc-badge-muted" *ngIf="item.gstNumber">📄 GST Certificate</span>
+                <span class="doc-badge-muted">📷 Photo</span>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <!-- Pending: Show Approve & Reject -->
+          <ng-container *ngIf="item.status === 'PENDING_VERIFICATION'">
+            <button class="btn-approve" (click)="approvePartner(item)" [disabled]="item.isProcessing">
+              {{ item.isProcessing ? 'Approving...' : 'Approve' }}
+            </button>
+            <button class="btn-reject" (click)="rejectPartner(item)" [disabled]="item.isProcessing">Reject</button>
+          </ng-container>
+
+          <!-- Active / Approved: Show Suspend ONLY -->
+          <ng-container *ngIf="item.status === 'ACTIVE' || item.status === 'ONLINE'">
+            <button class="btn-reject" style="background:#f59e0b;" (click)="suspendPartner(item)" [disabled]="item.isProcessing">
+              Suspend Account
+            </button>
+          </ng-container>
+
+          <!-- Suspended: Show Reactivate -->
+          <ng-container *ngIf="item.status === 'SUSPENDED'">
+            <button class="btn-approve" (click)="unsuspendPartner(item)" [disabled]="item.isProcessing">
+              Reactivate Account
+            </button>
+          </ng-container>
+        </div>
+      </div>
+
+      <div class="empty-card" *ngIf="verificationQueue.length === 0">
+        <p>No partner applications match the selected queue filter.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Document Preview & Download Modal Popup -->
+<div class="modal-overlay" *ngIf="showDocumentPreviewModal && selectedDocumentForPreview">
+  <div class="modal-card preview-modal">
+    <div class="modal-header">
+      <div>
+        <h3>{{ formatDocumentTypeName(selectedDocumentForPreview.documentType) }}</h3>
+        <p class="modal-subtitle">Submitted by <strong>{{ previewPartnerName }}</strong></p>
+      </div>
+      <button class="close-btn" (click)="closeDocumentPreview()">&times;</button>
+    </div>
+    
+    <div class="modal-body preview-body">
+      <div class="preview-container" *ngIf="isImageDocument(selectedDocumentForPreview); else pdfPreview">
+        <img [src]="getDocumentUrl(selectedDocumentForPreview.id)" alt="Document Preview" class="doc-img-preview" />
+      </div>
+      <ng-template #pdfPreview>
+        <div class="file-icon-box">
+          <div class="file-icon">📄</div>
+          <span class="file-name-text">{{ selectedDocumentForPreview.fileName }}</span>
+          <span class="file-type-badge">{{ selectedDocumentForPreview.fileType || 'Document File' }}</span>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeDocumentPreview()">Close</button>
+      <button class="btn-primary btn-download" (click)="downloadSelectedDocument()">
+        ⬇ Download Document
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add New Partner Modal -->
+<div class="modal-overlay" *ngIf="showAddModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Add New Partner (Contractor / Driver)</h3>
+      <button class="close-btn" (click)="closeAddModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Partner Type *</label>
+        <div class="radio-group">
+          <label><input type="radio" name="partnerType" value="DRIVER" [(ngModel)]="newPartner.partnerType" /> Driver</label>
+          <label><input type="radio" name="partnerType" value="CONTRACTOR" [(ngModel)]="newPartner.partnerType" /> Contractor</label>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" [(ngModel)]="newPartner.fullName" class="form-control" placeholder="Enter full name" />
+        </div>
+        <div class="form-group">
+          <label>Phone Number *</label>
+          <input type="text" [(ngModel)]="newPartner.phone" class="form-control" placeholder="+91..." />
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" [(ngModel)]="newPartner.email" class="form-control" placeholder="email@domain.com" />
+        </div>
+        <div class="form-group">
+          <label>Account Password *</label>
+          <input type="password" [(ngModel)]="newPartner.password" class="form-control" placeholder="Create account password" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Experience</label>
+        <input type="text" [(ngModel)]="newPartner.experience" class="form-control" placeholder="e.g. 5 years" />
+      </div>
+
+      <!-- Contractor specific fields -->
+      <div *ngIf="newPartner.partnerType === 'CONTRACTOR'" class="form-grid">
+        <div class="form-group">
+          <label>Company Name</label>
+          <input type="text" [(ngModel)]="newPartner.companyName" class="form-control" placeholder="Company Pvt Ltd" />
+        </div>
+        <div class="form-group">
+          <label>GST Number</label>
+          <input type="text" [(ngModel)]="newPartner.gstNumber" class="form-control" placeholder="29ABCDE1234F1Z5" />
+        </div>
+      </div>
+
+      <!-- Driver specific fields -->
+      <div *ngIf="newPartner.partnerType === 'DRIVER'">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>License Number</label>
+            <input type="text" [(ngModel)]="newPartner.licenseNumber" class="form-control" placeholder="DL-..." />
+          </div>
+          <div class="form-group">
+            <label>Aadhaar Number</label>
+            <input type="text" [(ngModel)]="newPartner.aadhaarNumber" class="form-control" placeholder="12-digit number" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Assign to Contractor (Optional)</label>
+          <select [(ngModel)]="newPartner.contractorId" class="form-control">
+            <option [ngValue]="null">-- Independent / No Contractor --</option>
+            <option *ngFor="let c of contractors" [ngValue]="c.id">
+              {{ c.fullName }} ({{ c.companyName || c.phone }})
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Document Uploads Section -->
+      <div class="document-upload-box">
+        <h4 class="doc-box-title">Upload Verification Documents</h4>
+        
+        <div *ngIf="newPartner.partnerType === 'DRIVER'" class="form-grid">
+          <div class="form-group">
+            <label>Driving License File</label>
+            <input type="file" (change)="onFileSelected($event, 'DRIVING_LICENSE')" accept="image/*,.pdf" class="file-control" />
+          </div>
+          <div class="form-group">
+            <label>Aadhaar Card File</label>
+            <input type="file" (change)="onFileSelected($event, 'AADHAAR_CARD')" accept="image/*,.pdf" class="file-control" />
+          </div>
+        </div>
+
+        <div *ngIf="newPartner.partnerType === 'CONTRACTOR'" class="form-grid">
+          <div class="form-group">
+            <label>GST Certificate File</label>
+            <input type="file" (change)="onFileSelected($event, 'GST_CERTIFICATE')" accept="image/*,.pdf" class="file-control" />
+          </div>
+          <div class="form-group">
+            <label>Company Registration</label>
+            <input type="file" (change)="onFileSelected($event, 'COMPANY_REGISTRATION')" accept="image/*,.pdf" class="file-control" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Profile Photo</label>
+          <input type="file" (change)="onFileSelected($event, 'PHOTO')" accept="image/*" class="file-control" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeAddModal()" [disabled]="isLoading">Cancel</button>
+      <button class="btn-primary" (click)="saveNewPartner()" [disabled]="isLoading">
+        {{ isLoading ? 'Uploading & Saving...' : 'Register Partner' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Contractor Detail & Assigned Drivers Modal -->
+<div class="modal-overlay" *ngIf="showContractorModal && selectedContractor">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Contractor Details</h3>
+      <button class="close-btn" (click)="closeContractorModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-grid">
+        <div><strong>Full Name:</strong> {{ selectedContractor.fullName }}</div>
+        <div><strong>Company:</strong> {{ selectedContractor.companyName || '-' }}</div>
+        <div><strong>Phone:</strong> {{ selectedContractor.phone }}</div>
+        <div><strong>Email:</strong> {{ selectedContractor.email || '-' }}</div>
+        <div><strong>GST Number:</strong> {{ selectedContractor.gstNumber || '-' }}</div>
+        <div><strong>Status:</strong> <span class="status-pill" [class]="selectedContractor.status?.toLowerCase()">{{ selectedContractor.status }}</span></div>
+      </div>
+
+      <h4 class="section-title">Assigned Drivers ({{ selectedContractor.assignedDrivers?.length || 0 }})</h4>
+      <table class="sub-table" *ngIf="selectedContractor.assignedDrivers?.length > 0; else noDrivers">
+        <thead>
+          <tr>
+            <th>Driver Name</th>
+            <th>Phone</th>
+            <th>License</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of selectedContractor.assignedDrivers">
+            <td>{{ d.fullName }}</td>
+            <td>{{ d.phone }}</td>
+            <td>{{ d.licenseNumber || '-' }}</td>
+            <td><span class="status-pill" [class]="d.status?.toLowerCase()">{{ d.status }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #noDrivers>
+        <p class="empty-text">No drivers currently assigned to this contractor.</p>
+      </ng-template>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeContractorModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Driver to Contractor Modal -->
+<div class="modal-overlay" *ngIf="showAssignModal && selectedDriverToAssign">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Assign Driver to Contractor</h3>
+      <button class="close-btn" (click)="closeAssignModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Select contractor for driver <strong>{{ selectedDriverToAssign.fullName }}</strong> ({{ selectedDriverToAssign.phone }}):</p>
+      
+      <div class="form-group">
+        <label>Contractor</label>
+        <select [(ngModel)]="targetContractorId" class="form-control">
+          <option [ngValue]="null">-- Unassigned --</option>
+          <option *ngFor="let c of contractors" [ngValue]="c.id">
+            {{ c.fullName }} ({{ c.companyName || c.phone }})
+          </option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeAssignModal()">Cancel</button>
+      <button class="btn-primary" (click)="assignDriver()">Save Assignment</button>
+    </div>
+  </div>
+</div>

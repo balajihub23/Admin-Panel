@@ -72,8 +72,29 @@ export class SidebarComponent implements OnInit {
   }
 
   private buildSidebar(menusList: any[]) {
-    this.sidebarItems = menusList.map((menu: any) => this.mapMenuToSidebarItem(menu));
-    // Auto-expand items that have submenus by default (optional — keep closed by default)
+    const mapped: SidebarItem[] = [];
+    let addedPartnersMenu = false;
+
+    for (const menu of menusList) {
+      const code = (menu.menuCode || '').toLowerCase();
+      const path = (menu.routePath || '').toLowerCase();
+
+      if (code === 'contractors' || code === 'drivers' || code === 'partners' ||
+          path === '/contractors' || path === '/drivers' || path === '/partners') {
+        if (!addedPartnersMenu) {
+          mapped.push({
+            name: 'Partners',
+            code: 'partners',
+            icon: 'drivers',
+            route: '/partners'
+          });
+          addedPartnersMenu = true;
+        }
+      } else {
+        mapped.push(this.mapMenuToSidebarItem(menu));
+      }
+    }
+    this.sidebarItems = mapped;
   }
 
   private mapMenuToSidebarItem(menu: any): SidebarItem {

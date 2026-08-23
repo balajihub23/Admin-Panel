@@ -1,0 +1,145 @@
+<div class="pricing-container">
+  <div class="page-header">
+    <div>
+      <h2>Pricing Engine Management</h2>
+      <p class="subtitle">Set up custom pricing rules for JCB equipment and ride hailing</p>
+    </div>
+    <button class="btn-primary" (click)="openCreateModal()">+ Set Pricing Rule</button>
+  </div>
+
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Model Type</th>
+          <th>Base Price / Fare</th>
+          <th>Per KM</th>
+          <th>Per Hour / Min</th>
+          <th>Min Fare / Hours</th>
+          <th>Operator / Booking Fee</th>
+          <th>Tax %</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let pr of pricings">
+          <td><strong>{{ getProductName(pr.productId) }}</strong></td>
+          <td>
+            <span class="badge" [class.badge-jcb]="getProductType(pr.productId) === 'JCB'" [class.badge-ride]="getProductType(pr.productId) !== 'JCB'">
+              {{ getProductType(pr.productId) }}
+            </span>
+          </td>
+          <td>₹{{ pr.basePrice }}</td>
+          <td>₹{{ pr.perKmPrice }} / km</td>
+          <td>
+            <span *ngIf="getProductType(pr.productId) === 'JCB'">₹{{ pr.perHourPrice }} / hr</span>
+            <span *ngIf="getProductType(pr.productId) !== 'JCB'">₹{{ pr.perMinutePrice }} / min</span>
+          </td>
+          <td>
+            <span *ngIf="getProductType(pr.productId) === 'JCB'">{{ pr.minimumHours }} hrs min</span>
+            <span *ngIf="getProductType(pr.productId) !== 'JCB'">₹{{ pr.minimumFare }} min fare</span>
+          </td>
+          <td>
+            <span *ngIf="getProductType(pr.productId) === 'JCB'">₹{{ pr.operatorCharge }} (Op Charge)</span>
+            <span *ngIf="getProductType(pr.productId) !== 'JCB'">₹{{ pr.bookingFee }} (Booking Fee)</span>
+          </td>
+          <td>{{ pr.taxPercentage }}%</td>
+          <td>
+            <button class="btn-sm btn-outline" (click)="openEditModal(pr)">Edit Rule</button>
+          </td>
+        </tr>
+        <tr *ngIf="pricings.length === 0">
+          <td colspan="9" class="empty-state">No pricing configurations established.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Form with Dynamic Field Rendering -->
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>{{ editingPricing.id ? 'Edit Pricing Rule' : 'Add Pricing Rule' }}</h3>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Select Product *</label>
+        <select [(ngModel)]="editingPricing.productId" (change)="onProductChange()" class="form-control">
+          <option *ngFor="let prod of products" [value]="prod.id">
+            {{ prod.name }} ({{ prod.productType }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Dynamic JCB / Heavy Equipment Fields -->
+      <div *ngIf="isJcbType()" class="pricing-fields-grid">
+        <div class="form-group">
+          <label>Base Price (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.basePrice" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Hourly Rate (₹/hour)</label>
+          <input type="number" [(ngModel)]="editingPricing.perHourPrice" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Minimum Hours Required</label>
+          <input type="number" [(ngModel)]="editingPricing.minimumHours" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Per KM Rate (₹/km)</label>
+          <input type="number" [(ngModel)]="editingPricing.perKmPrice" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Operator / Driver Charge (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.operatorCharge" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Waiting Charge (₹/hour)</label>
+          <input type="number" [(ngModel)]="editingPricing.waitingCharge" class="form-control" />
+        </div>
+      </div>
+
+      <!-- Dynamic Bike / Auto / Car Uber-style Fields -->
+      <div *ngIf="!isJcbType()" class="pricing-fields-grid">
+        <div class="form-group">
+          <label>Base Fare (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.basePrice" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Per KM Rate (₹/km)</label>
+          <input type="number" [(ngModel)]="editingPricing.perKmPrice" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Per Minute Rate (₹/min)</label>
+          <input type="number" [(ngModel)]="editingPricing.perMinutePrice" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Minimum Fare (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.minimumFare" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Booking Fee (₹)</label>
+          <input type="number" [(ngModel)]="editingPricing.bookingFee" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Surge Multiplier</label>
+          <input type="number" step="0.1" [(ngModel)]="editingPricing.surgeMultiplier" class="form-control" />
+        </div>
+      </div>
+
+      <div class="pricing-fields-grid">
+        <div class="form-group">
+          <label>Tax Percentage (%)</label>
+          <input type="number" [(ngModel)]="editingPricing.taxPercentage" class="form-control" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+      <button class="btn-primary" (click)="savePricing()">Save Pricing Rule</button>
+    </div>
+  </div>
+</div>

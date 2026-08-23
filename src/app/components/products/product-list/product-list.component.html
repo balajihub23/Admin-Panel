@@ -1,0 +1,89 @@
+<div class="product-container">
+  <div class="page-header">
+    <div>
+      <h2>Product Catalog Management</h2>
+      <p class="subtitle">Configure JCB Heavy Equipment and Uber/Rapido Ride products</p>
+    </div>
+    <button class="btn-primary" (click)="openCreateModal()">+ Add Product</button>
+  </div>
+
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Code</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of products">
+          <td>
+            <strong>{{ p.name }}</strong>
+            <div class="desc" *ngIf="p.description">{{ p.description }}</div>
+          </td>
+          <td><code>{{ p.code }}</code></td>
+          <td><span class="badge" [class.badge-jcb]="p.productType === 'JCB'" [class.badge-ride]="p.productType !== 'JCB'">{{ p.productType }}</span></td>
+          <td>{{ p.category || '-' }}</td>
+          <td><span class="status-pill" [class.active]="p.active" [class.inactive]="!p.active">{{ p.active ? 'Active' : 'Inactive' }}</span></td>
+          <td>
+            <button class="btn-sm btn-outline" (click)="openEditModal(p)">Edit</button>
+            <button class="btn-sm btn-danger" (click)="deleteProduct(p.id!)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="products.length === 0">
+          <td colspan="6" class="empty-state">No products configured yet.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Form -->
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>{{ editingProduct.id ? 'Edit Product' : 'Add New Product' }}</h3>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Product Name *</label>
+        <input type="text" [(ngModel)]="editingProduct.name" class="form-control" placeholder="e.g. JCB 3CX Backhoe Loader" />
+      </div>
+      <div class="form-group">
+        <label>Product Code *</label>
+        <input type="text" [(ngModel)]="editingProduct.code" class="form-control" placeholder="e.g. JCB_3CX" />
+      </div>
+      <div class="form-group">
+        <label>Product Type *</label>
+        <select [(ngModel)]="editingProduct.productType" class="form-control">
+          <option value="JCB">JCB Heavy Equipment</option>
+          <option value="EXCAVATOR">Excavator</option>
+          <option value="CRANE">Crane</option>
+          <option value="BIKE">Bike Ride</option>
+          <option value="AUTO">Auto Rickshaw</option>
+          <option value="CAR">Car / Sedan / SUV</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <input type="text" [(ngModel)]="editingProduct.category" class="form-control" placeholder="e.g. Heavy Machinery / Ride Hailing" />
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea [(ngModel)]="editingProduct.description" class="form-control" rows="3"></textarea>
+      </div>
+      <div class="form-group checkbox-group">
+        <label><input type="checkbox" [(ngModel)]="editingProduct.active" /> Active Product</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+      <button class="btn-primary" (click)="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>

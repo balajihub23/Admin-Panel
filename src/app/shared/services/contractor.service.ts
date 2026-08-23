@@ -14,6 +14,7 @@ export interface Contractor {
   experience?: string;
   rating?: number;
   status: string; // PENDING_VERIFICATION, ACTIVE, SUSPENDED, REJECTED
+  assignedDrivers?: any[];
   createdAt?: string;
 }
 

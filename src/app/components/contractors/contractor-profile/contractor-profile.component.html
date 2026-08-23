@@ -79,47 +79,170 @@
       </div>
     </div>
 
-    <!-- Right: Stats -->
+    <!-- Right: Stats & Tables -->
     <div class="stats-history-layout">
-      <!-- High Level Metrics Grid -->
+      <!-- Dynamic Metrics Grid -->
       <div class="stats-grid">
         <div class="stat-card premium-card">
-          <span class="stat-title">Active Projects</span>
-          <span class="stat-value">12</span>
+          <span class="stat-title">Total Jobs</span>
+          <span class="stat-value">{{totalContractorJobs}}</span>
         </div>
         <div class="stat-card premium-card">
           <span class="stat-title">Linked Drivers</span>
-          <span class="stat-value">6</span>
+          <span class="stat-value">{{linkedDriversCount}}</span>
         </div>
         <div class="stat-card premium-card">
           <span class="stat-title">Performance Rating</span>
-          <span class="stat-value">{{contractor.rating | number:'1.1-1'}} / 5.0</span>
+          <span class="stat-value">{{performanceRating | number:'1.1-1'}} / 5.0</span>
         </div>
       </div>
 
-      <!-- General Documents Details info card -->
+      <!-- Assigned Drivers Table with Pagination -->
+      <div class="table-container premium-card" style="padding: 20px; margin-bottom: 24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+          <h3 style="margin:0; color:#0f172a; font-size:1.1rem;">Assigned Drivers List ({{assignedDrivers.length}})</h3>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Driver Name</th>
+              <th>Mobile</th>
+              <th>License Number</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of paginatedDrivers()">
+              <td><strong>{{d.fullName}}</strong></td>
+              <td>{{d.phone}}</td>
+              <td>{{d.licenseNumber || '-'}}</td>
+              <td>
+                <span class="status-indicator" [ngClass]="{'status-active': d.status === 'ACTIVE', 'status-suspended': d.status === 'SUSPENDED'}">
+                  {{d.status}}
+                </span>
+              </td>
+              <td>
+                <a [routerLink]="['/drivers', d.id]" style="font-size:0.85rem; color:#2563eb; font-weight:600; text-decoration:underline;">View Profile</a>
+              </td>
+            </tr>
+            <tr *ngIf="assignedDrivers.length === 0">
+              <td colspan="5" class="text-center text-muted" style="padding: 1.5rem;">No drivers currently assigned to this contractor.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Driver Pagination Bar -->
+        <div class="pagination-bar" style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-top:1px solid #f1f5f9; background:#fff;">
+          <div style="font-size:0.85rem; color:#475569; border:1px solid #e2e8f0; padding:4px 12px; border-radius:16px;">
+            Total : <strong>{{ assignedDrivers.length }}</strong>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button (click)="previousDriverPage()" [disabled]="driverPage === 1" style="background:transparent; border:none; color:#64748b; cursor:pointer; padding:4px 8px;">&larr; Previous</button>
+            <span style="font-size:0.85rem; font-weight:600; color:#0f172a;">Page {{ driverPage }} of {{ totalDriverPages }}</span>
+            <button (click)="nextDriverPage()" [disabled]="driverPage === totalDriverPages" style="background:transparent; border:none; color:#64748b; cursor:pointer; padding:4px 8px;">Next &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contractor Jobs History Table with Pagination -->
+      <div class="table-container premium-card" style="padding: 20px; margin-bottom: 24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+          <h3 style="margin:0; color:#0f172a; font-size:1.1rem;">Contractor Jobs / Bookings History ({{jobs.length}})</h3>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Booking #</th>
+              <th>Date</th>
+              <th>Customer ID</th>
+              <th>Driver ID</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let job of paginatedJobs()">
+              <td class="text-muted">#{{job.bookingNumber || job.id}}</td>
+              <td>{{job.bookingDate || (job.createdAt | date:'yyyy-MM-dd')}}</td>
+              <td>Customer #{{job.customerId || '-'}}</td>
+              <td>Driver #{{job.driverId || '-'}}</td>
+              <td>₹{{(job.totalAmount || 0) | number}}</td>
+              <td>
+                <span class="status-indicator" [ngClass]="{'status-active': job.status === 'COMPLETED', 'status-suspended': job.status === 'CANCELLED'}">
+                  {{job.status}}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="jobs.length === 0">
+              <td colspan="6" class="text-center text-muted" style="padding: 1.5rem;">No bookings found for this contractor.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Job Pagination Bar -->
+        <div class="pagination-bar" style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-top:1px solid #f1f5f9; background:#fff;">
+          <div style="font-size:0.85rem; color:#475569; border:1px solid #e2e8f0; padding:4px 12px; border-radius:16px;">
+            Total : <strong>{{ jobs.length }}</strong>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button (click)="previousJobPage()" [disabled]="jobPage === 1" style="background:transparent; border:none; color:#64748b; cursor:pointer; padding:4px 8px;">&larr; Previous</button>
+            <span style="font-size:0.85rem; font-weight:600; color:#0f172a;">Page {{ jobPage }} of {{ totalJobPages }}</span>
+            <button (click)="nextJobPage()" [disabled]="jobPage === totalJobPages" style="background:transparent; border:none; color:#64748b; cursor:pointer; padding:4px 8px;">Next &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submitted Verification Documents info card -->
       <div class="table-container premium-card" style="padding: 24px;">
         <h3 style="margin-top:0; margin-bottom: 16px; color:#0f172a;">Submitted Verification Documents</h3>
-        <p class="text-muted" style="font-size: 14px; margin-bottom: 20px;">The following compliance files are uploaded and active for this contractor account.</p>
+        <p class="text-muted" style="font-size: 14px; margin-bottom: 20px;">Click any document badge below to preview or download compliance files.</p>
         
         <div *ngIf="documents.length === 0" class="text-muted" style="font-size: 14px; padding: 12px 16px; border: 1px dashed #cbd5e1; border-radius: 8px; text-align: center;">
           No verification files uploaded.
         </div>
 
-        <div class="docs-list" style="display:flex; flex-direction:column; gap:12px;" *ngIf="documents.length > 0">
-          <div class="doc-file-row" *ngFor="let doc of documents" style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border:1px solid #e2e8f0; border-radius:8px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span>📄</span>
-              <span style="font-weight:600; font-size:14px; color:#1e293b;">
-                {{ doc.documentType.replace('_', ' ') }}
-              </span>
-            </div>
-            <a [href]="getDownloadUrl(doc)" target="_blank" style="font-size: 13px; color: var(--primary, #ff9800); font-weight: 700; text-decoration: underline;">
-              Download / View
-            </a>
-          </div>
+        <div class="doc-badges" style="display:flex; flex-wrap:wrap; gap:10px;" *ngIf="documents.length > 0">
+          <button class="doc-badge-btn" *ngFor="let doc of documents" (click)="openDocumentPreview(doc)">
+            📄 {{ formatDocumentTypeName(doc.documentType) }}
+          </button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Document Preview & Download Modal Popup -->
+<div class="modal-overlay" *ngIf="showDocumentPreviewModal && selectedDocumentForPreview">
+  <div class="modal-card preview-modal">
+    <div class="modal-header">
+      <div>
+        <h3>{{ formatDocumentTypeName(selectedDocumentForPreview.documentType) }}</h3>
+        <p class="modal-subtitle">Submitted by <strong>{{ contractor?.fullName }}</strong></p>
+      </div>
+      <button class="close-btn" (click)="closeDocumentPreview()">&times;</button>
+    </div>
+    
+    <div class="modal-body preview-body">
+      <div class="preview-container" *ngIf="isImageDocument(selectedDocumentForPreview); else pdfPreview">
+        <img [src]="getDownloadUrl(selectedDocumentForPreview)" alt="Document Preview" class="doc-img-preview" />
+      </div>
+      <ng-template #pdfPreview>
+        <div class="file-icon-box">
+          <div class="file-icon">📄</div>
+          <span class="file-name-text">{{ selectedDocumentForPreview.fileName }}</span>
+          <span class="file-type-badge">{{ selectedDocumentForPreview.fileType || 'Document File' }}</span>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="modal-footer" style="padding:16px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:12px;">
+      <button class="btn-secondary" (click)="closeDocumentPreview()" style="padding:8px 16px; border-radius:6px; border:1px solid #cbd5e1; background:#fff; cursor:pointer;">Close</button>
+      <button class="btn-primary btn-download" (click)="downloadSelectedDocument()" style="padding:8px 16px; border-radius:6px; background:#16a34a; color:#fff; border:none; font-weight:600; cursor:pointer;">
+        ⬇ Download Document
+      </button>
     </div>
   </div>
 </div>
