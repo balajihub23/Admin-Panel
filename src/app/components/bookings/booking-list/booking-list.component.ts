@@ -6,6 +6,7 @@ import { BookingService, Booking } from '../../../shared/services/booking.servic
 import { ProductService, Product } from '../../../shared/services/product.service';
 import { PartnerService } from '../../../shared/services/partner.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { BookingSettingService, BookingAssignment } from '../../../shared/services/booking-setting.service';
 
 @Component({
   selector: 'app-booking-list',
@@ -20,6 +21,7 @@ export class BookingListComponent implements OnInit {
   private partnerService = inject(PartnerService);
   private router = inject(Router);
   private toastService = inject(ToastService);
+  private bookingSettingService = inject(BookingSettingService);
 
   bookings: Booking[] = [];
   products: Product[] = [];
@@ -33,6 +35,10 @@ export class BookingListComponent implements OnInit {
   showAssignModal = false;
   assignContractorId: number | null = null;
   assignDriverId: number | null = null;
+
+  showMonitorModal = false;
+  assignmentHistory: BookingAssignment[] = [];
+  isLoadingHistory = false;
 
   ngOnInit(): void {
     this.loadData();
@@ -128,5 +134,29 @@ export class BookingListComponent implements OnInit {
       },
       error: (err) => this.toastService.showError(err.error?.message || 'Status transition invalid')
     });
+  }
+
+  openMonitorModal(booking: Booking): void {
+    if (!booking.id) return;
+    this.selectedBooking = booking;
+    this.showMonitorModal = true;
+    this.isLoadingHistory = true;
+    this.bookingSettingService.getAssignmentAuditHistory(booking.id).subscribe({
+      next: (res) => {
+        this.isLoadingHistory = false;
+        if (res.success) {
+          this.assignmentHistory = res.data || [];
+        }
+      },
+      error: (err) => {
+        this.isLoadingHistory = false;
+        this.toastService.showError('Failed to load assignment audit history');
+      }
+    });
+  }
+
+  closeMonitorModal(): void {
+    this.showMonitorModal = false;
+    this.assignmentHistory = [];
   }
 }

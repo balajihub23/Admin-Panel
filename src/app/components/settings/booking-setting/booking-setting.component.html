@@ -1,0 +1,121 @@
+<div class="settings-container">
+  <div class="page-header">
+    <div>
+      <h2>Booking & Payment Settings</h2>
+      <p class="subtitle">Configure Razorpay payment gateway parameters and Progressive Auto-Assignment rules</p>
+    </div>
+    <button class="btn-primary" (click)="saveSettings()" [disabled]="isSaving">
+      <span *ngIf="isSaving" class="spinner-sm"></span>
+      {{ isSaving ? 'Saving...' : 'Save Settings' }}
+    </button>
+  </div>
+
+  <div class="settings-grid" *ngIf="!isLoading">
+    <!-- Payment Gateway Settings Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Payment Gateway (Razorpay)</h3>
+        <span class="badge" [class.enabled]="settings.paymentEnabled" [class.disabled]="!settings.paymentEnabled">
+          {{ settings.paymentEnabled ? 'ENABLED' : 'DISABLED' }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="form-group inline-toggle">
+          <label>Enable Online Payment Gateway</label>
+          <input type="checkbox" [(ngModel)]="settings.paymentEnabled" class="toggle-checkbox" />
+        </div>
+
+        <div class="form-group">
+          <label>Gateway</label>
+          <select [(ngModel)]="settings.gateway" class="form-control">
+            <option value="RAZORPAY">Razorpay</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Environment</label>
+          <select [(ngModel)]="settings.environment" class="form-control">
+            <option value="TEST">TEST Mode</option>
+            <option value="LIVE">LIVE Production Mode</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Razorpay Key ID</label>
+          <input type="text" [(ngModel)]="settings.keyId" placeholder="rzp_test_..." class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label>Razorpay Key Secret</label>
+          <input type="password" [(ngModel)]="settings.keySecret" placeholder="••••••••••••••••" class="form-control" />
+          <small class="field-hint">Never exposed to frontend API clients. Masked as ****** after saving.</small>
+        </div>
+
+        <div class="form-group">
+          <label>Razorpay Webhook Secret</label>
+          <input type="password" [(ngModel)]="settings.webhookSecret" placeholder="••••••••••••••••" class="form-control" />
+          <small class="field-hint">Used for server-side webhook signature validation.</small>
+        </div>
+
+        <div class="form-group">
+          <label>Currency</label>
+          <input type="text" [(ngModel)]="settings.currency" placeholder="INR" class="form-control" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-Assignment Settings Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Smart Progressive Auto-Assignment Engine</h3>
+        <span class="badge mode" [class.auto]="settings.assignmentType === 'AUTO'">
+          {{ settings.assignmentType }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>Assignment Mode</label>
+          <select [(ngModel)]="settings.assignmentType" class="form-control">
+            <option value="AUTO">AUTO (Progressive Layered Auto-Search)</option>
+            <option value="MANUAL">MANUAL (Admin Direct Selection)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Initial Layer Radius (KM)</label>
+          <input type="number" [(ngModel)]="settings.initialRadiusKm" step="1" class="form-control" />
+          <small class="field-hint">Layer 1 search radius (e.g. 5 KM = 0–5 KM candidate search)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Radius Increment per Layer (KM)</label>
+          <input type="number" [(ngModel)]="settings.radiusIncrementKm" step="1" class="form-control" />
+          <small class="field-hint">Radius expansion step (e.g. +5 KM -> Layer 2: 5–10 KM, Layer 3: 10–15 KM)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Maximum Search Radius (KM)</label>
+          <input type="number" [(ngModel)]="settings.maxRadiusKm" step="1" class="form-control" />
+          <small class="field-hint">Hard cutoff limit for candidate searches (e.g. 20 KM)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Layer Offer Timeout (Seconds)</label>
+          <input type="number" [(ngModel)]="settings.assignmentTimeoutSeconds" step="5" class="form-control" />
+          <small class="field-hint">Time allowed for candidates to accept before escalating to next radius layer</small>
+        </div>
+
+        <div class="form-group">
+          <label>GPS Location Freshness Window (Seconds)</label>
+          <input type="number" [(ngModel)]="settings.maxLocationAgeSeconds" step="30" class="form-control" />
+          <small class="field-hint">Exclude drivers/contractors with stale GPS updates older than this cutoff (e.g. 300 sec = 5 mins)</small>
+        </div>
+
+        <div class="form-group inline-toggle">
+          <label>Notify Admin when All Radius Layers Expire</label>
+          <input type="checkbox" [(ngModel)]="settings.notifyAdminWhenUnassigned" class="toggle-checkbox" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

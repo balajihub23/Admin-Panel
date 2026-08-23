@@ -93,6 +93,13 @@
   background: #ffffff; width: 100%; max-width: 540px; border-radius: 14px;
   box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
   overflow: hidden; display: flex; flex-direction: column;
+  &.wide { max-width: 850px; }
+}
+
+.audit-table {
+  font-size: 0.85rem;
+  th { padding: 10px 14px; background: #f8fafc; }
+  td { padding: 10px 14px; }
 }
 
 .modal-header {

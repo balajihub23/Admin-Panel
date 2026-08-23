@@ -52,6 +52,7 @@
           <td class="nowrap-cell">
             <div class="action-buttons">
               <button class="btn-sm btn-outline" (click)="viewDetails(b)">Details</button>
+              <button class="btn-sm btn-outline" (click)="openMonitorModal(b)">Monitor</button>
               <button class="btn-sm btn-outline" (click)="openAssignModal(b)">Assign</button>
               <select #statusSelect (change)="updateStatus(b, statusSelect.value); statusSelect.value=''" class="select-status-sm">
                 <option value="" disabled selected>Update Status</option>
@@ -71,6 +72,58 @@
         </tr>
       </tbody>
     </table>
+  </div>
+</div>
+
+<!-- Live Assignment Monitor Audit Modal -->
+<div class="modal-overlay" *ngIf="showMonitorModal && selectedBooking">
+  <div class="modal-card wide">
+    <div class="modal-header">
+      <h3>Live Assignment Monitor — {{ selectedBooking.bookingNumber }}</h3>
+      <button class="close-btn" (click)="closeMonitorModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-grid">
+        <div><strong>Status:</strong> <span class="status-pill" [class]="selectedBooking.status?.toLowerCase()">{{ selectedBooking.status }}</span></div>
+        <div><strong>Product:</strong> {{ getProductName(selectedBooking.productId) }}</div>
+      </div>
+
+      <h4 class="section-title">Progressive Radius Search Audit Log</h4>
+      <div *ngIf="isLoadingHistory" class="loading-box">Loading audit history...</div>
+      
+      <table class="data-table audit-table" *ngIf="!isLoadingHistory">
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>Radius</th>
+            <th>Candidate</th>
+            <th>Distance</th>
+            <th>Status</th>
+            <th>Offered At</th>
+            <th>Responded At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of assignmentHistory">
+            <td><strong>Layer {{ h.layerIndex }}</strong></td>
+            <td>{{ h.radiusKm }} KM</td>
+            <td>{{ h.candidateType }} #{{ h.candidateId }}</td>
+            <td>{{ h.distanceKm ? (h.distanceKm.toFixed(2) + ' KM') : '-' }}</td>
+            <td>
+              <span class="status-pill" [class]="h.status.toLowerCase()">{{ h.status }}</span>
+            </td>
+            <td>{{ h.offeredAt | date:'shortTime' }}</td>
+            <td>{{ h.respondedAt ? (h.respondedAt | date:'shortTime') : '-' }}</td>
+          </tr>
+          <tr *ngIf="assignmentHistory.length === 0">
+            <td colspan="7" class="empty-state">No assignment attempts recorded for this booking.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeMonitorModal()">Close</button>
+    </div>
   </div>
 </div>
 
