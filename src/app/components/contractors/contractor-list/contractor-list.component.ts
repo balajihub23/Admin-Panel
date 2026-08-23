@@ -7,6 +7,8 @@ import { DocumentService, DocumentInfo } from '../../../shared/services/document
 import { FileUploaderComponent } from '../../../shared/components/file-uploader/file-uploader.component';
 import { forkJoin } from 'rxjs';
 
+import { ToastService } from '../../../shared/services/toast.service';
+
 @Component({
   selector: 'app-contractor-list',
   standalone: true,
@@ -17,6 +19,7 @@ import { forkJoin } from 'rxjs';
 export class ContractorListComponent implements OnInit {
   private contractorService = inject(ContractorService);
   private documentService = inject(DocumentService);
+  private toastService = inject(ToastService);
 
   contractors: Contractor[] = [];
   isLoading = true;
@@ -186,14 +189,15 @@ export class ContractorListComponent implements OnInit {
     this.contractorService.approveContractor(id).subscribe({
       next: (res) => {
         if (res.success) {
+          this.toastService.showSuccess('✓ Contractor approved successfully!');
           this.loadContractors();
         } else {
-          alert('Failed to approve contractor: ' + res.message);
+          this.toastService.showError('Failed to approve contractor: ' + res.message);
         }
       },
       error: (err) => {
         console.error('Error approving contractor:', err);
-        alert(err.error?.message || 'Error occurred');
+        this.toastService.showError(err.error?.message || 'Error occurred during approval');
       }
     });
   }
@@ -204,14 +208,15 @@ export class ContractorListComponent implements OnInit {
       this.contractorService.rejectContractor(id).subscribe({
         next: (res) => {
           if (res.success) {
+            this.toastService.showSuccess('✓ Contractor application rejected.');
             this.loadContractors();
           } else {
-            alert('Failed to reject: ' + res.message);
+            this.toastService.showError('Failed to reject: ' + res.message);
           }
         },
         error: (err) => {
           console.error(err);
-          alert('Error occurred');
+          this.toastService.showError('Error occurred during rejection');
         }
       });
     }
@@ -334,28 +339,32 @@ export class ContractorListComponent implements OnInit {
             this.documentService.associateDocuments(this.uploadedDocIds, 'CONTRACTOR', savedContractorId).subscribe({
               next: () => {
                 this.isSaving = false;
+                this.toastService.showSuccess('✓ Contractor and documents saved successfully!');
                 this.loadContractors();
                 this.closeModal();
               },
               error: (assocErr) => {
                 this.isSaving = false;
-                this.formError = 'Contractor saved, but document association failed: ' + (assocErr.error?.message || assocErr.message);
+                this.toastService.showError('Contractor saved, but document association failed: ' + (assocErr.error?.message || assocErr.message));
                 this.loadContractors();
               }
             });
           } else {
             this.isSaving = false;
+            this.toastService.showSuccess('✓ Contractor saved successfully!');
             this.loadContractors();
             this.closeModal();
           }
         } else {
           this.isSaving = false;
           this.formError = res.message || 'Failed to save contractor';
+          this.toastService.showError(this.formError);
         }
       },
       error: (err) => {
         this.isSaving = false;
         this.formError = err.error?.message || 'Error occurred while saving contractor';
+        this.toastService.showError(this.formError);
       }
     });
   }
@@ -366,14 +375,15 @@ export class ContractorListComponent implements OnInit {
       this.contractorService.deleteContractor(id).subscribe({
         next: (res) => {
           if (res.success) {
+            this.toastService.showSuccess('✓ Contractor deleted successfully.');
             this.loadContractors();
           } else {
-            alert('Failed to delete: ' + res.message);
+            this.toastService.showError('Failed to delete: ' + res.message);
           }
         },
         error: (err) => {
           console.error(err);
-          alert('Error occurred');
+          this.toastService.showError('Error occurred while deleting contractor');
         }
       });
     }

@@ -39,21 +39,21 @@
       </thead>
       <tbody>
         <tr *ngFor="let b of filteredBookings()">
-          <td>
-            <strong>{{ b.bookingNumber }}</strong>
+          <td class="nowrap-cell">
+            <strong class="booking-num">{{ b.bookingNumber }}</strong>
           </td>
           <td>{{ getProductName(b.productId) }}</td>
-          <td>{{ b.bookingDate || '-' }} {{ b.bookingTime || '' }}</td>
-          <td>{{ b.distanceKm || 0 }} km / {{ b.durationHours || 0 }} hrs</td>
-          <td><strong class="price">₹{{ b.totalAmount }}</strong></td>
-          <td>
+          <td class="nowrap-cell">{{ b.bookingDate || '-' }} {{ b.bookingTime || '' }}</td>
+          <td class="nowrap-cell">{{ b.distanceKm || 0 }} km / {{ b.durationHours || 0 }} hrs</td>
+          <td class="nowrap-cell"><strong class="price">₹{{ b.totalAmount }}</strong></td>
+          <td class="nowrap-cell">
             <span class="status-pill" [class]="b.status?.toLowerCase()">{{ b.status }}</span>
           </td>
-          <td>
+          <td class="nowrap-cell">
             <div class="action-buttons">
               <button class="btn-sm btn-outline" (click)="viewDetails(b)">Details</button>
               <button class="btn-sm btn-outline" (click)="openAssignModal(b)">Assign</button>
-              <select #statusSelect (change)="updateStatus(b, statusSelect.value)" class="select-status-sm">
+              <select #statusSelect (change)="updateStatus(b, statusSelect.value); statusSelect.value=''" class="select-status-sm">
                 <option value="" disabled selected>Update Status</option>
                 <option value="CONFIRMED" *ngIf="b.status === 'PENDING'">Confirm</option>
                 <option value="ASSIGNED" *ngIf="b.status === 'CONFIRMED'">Assign</option>

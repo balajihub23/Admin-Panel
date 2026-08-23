@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MenuService, MenuAdminItem, MenuSaveRequest } from '../../../shared/services/menu.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-menu-list',
@@ -12,6 +13,7 @@ import { MenuService, MenuAdminItem, MenuSaveRequest } from '../../../shared/ser
 })
 export class MenuListComponent implements OnInit {
   private menuService = inject(MenuService);
+  private toastService = inject(ToastService);
 
   menus: MenuAdminItem[] = [];
   isLoading = true;
@@ -71,11 +73,12 @@ export class MenuListComponent implements OnInit {
         if (res.success && res.data) {
           this.menus = res.data;
           this.calculateStats();
+          this.toastService.showSuccess('✓ Menu configuration refreshed.');
         }
       },
       error: (err) => {
         this.isRefreshing = false;
-        console.error('Error refreshing menus:', err);
+        this.toastService.showError('Error refreshing menus');
       }
     });
   }
@@ -164,16 +167,18 @@ export class MenuListComponent implements OnInit {
       next: (res) => {
         this.isSaving = false;
         if (res.success) {
+          this.toastService.showSuccess('✓ Menu item saved successfully!');
           this.loadMenus();
           this.closeModal();
         } else {
           this.formError = res.message || 'Failed to save menu.';
+          this.toastService.showError(this.formError);
         }
       },
       error: (err) => {
         this.isSaving = false;
         this.formError = err.error?.message || 'An error occurred while saving.';
-        console.error('Error saving menu:', err);
+        this.toastService.showError(this.formError);
       }
     });
   }
@@ -183,14 +188,15 @@ export class MenuListComponent implements OnInit {
       this.menuService.deleteMenu(id).subscribe({
         next: (res) => {
           if (res.success) {
+            this.toastService.showSuccess('✓ Menu item deleted successfully.');
             this.loadMenus();
           } else {
-            alert('Failed to delete menu: ' + res.message);
+            this.toastService.showError('Failed to delete menu: ' + res.message);
           }
         },
         error: (err) => {
           console.error('Error deleting menu:', err);
-          alert(err.error?.message || 'Error occurred while deleting menu');
+          this.toastService.showError(err.error?.message || 'Error occurred while deleting menu');
         }
       });
     }

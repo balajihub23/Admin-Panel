@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RolePermissionService, Permission, Menu } from '../../../shared/services/role-permission.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-role-permission-setup',
@@ -12,6 +13,7 @@ import { RolePermissionService, Permission, Menu } from '../../../shared/service
 })
 export class RolePermissionSetupComponent implements OnInit {
   private rpService = inject(RolePermissionService);
+  private toastService = inject(ToastService);
 
   roles: string[] = ['ADMIN', 'CONTRACTOR', 'DRIVER', 'CUSTOMER'];
   selectedRole = 'ADMIN';
@@ -135,13 +137,13 @@ export class RolePermissionSetupComponent implements OnInit {
       next: (res) => {
         this.isSaving = false;
         if (res.success) {
-          alert(`Access assignments for ${this.selectedRole} saved successfully.`);
+          this.toastService.showSuccess(`✓ Access assignments for ${this.selectedRole} saved successfully.`);
         }
       },
       error: (err) => {
         this.isSaving = false;
         console.error('Error saving assignments:', err);
-        alert('Failed to save assignments.');
+        this.toastService.showError('Failed to save assignments.');
       }
     });
   }
@@ -190,15 +192,18 @@ export class RolePermissionSetupComponent implements OnInit {
       next: (res) => {
         this.isActionLoading = false;
         if (res.success) {
+          this.toastService.showSuccess('✓ Permission saved successfully!');
           this.closeModal();
           this.loadInitialData(); // Refresh definitions & maps
         } else {
           this.errorMessage = res.message || 'Operation failed.';
+          this.toastService.showError(this.errorMessage);
         }
       },
       error: (err) => {
         this.isActionLoading = false;
         this.errorMessage = err.error?.message || 'Server error occurred.';
+        this.toastService.showError(this.errorMessage);
         console.error('Error saving permission:', err);
       }
     });
@@ -211,13 +216,14 @@ export class RolePermissionSetupComponent implements OnInit {
         next: (res) => {
           this.isActionLoading = false;
           if (res.success) {
+            this.toastService.showSuccess('✓ Permission deleted successfully.');
             this.loadInitialData();
           }
         },
         error: (err) => {
           this.isActionLoading = false;
           console.error('Error deleting permission:', err);
-          alert('Failed to delete permission.');
+          this.toastService.showError('Failed to delete permission.');
         }
       });
     }

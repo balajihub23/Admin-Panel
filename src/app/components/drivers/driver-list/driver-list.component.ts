@@ -8,6 +8,8 @@ import { DocumentService, DocumentInfo } from '../../../shared/services/document
 import { FileUploaderComponent } from '../../../shared/components/file-uploader/file-uploader.component';
 import { forkJoin, of } from 'rxjs';
 
+import { ToastService } from '../../../shared/services/toast.service';
+
 @Component({
   selector: 'app-driver-list',
   standalone: true,
@@ -19,6 +21,7 @@ export class DriverListComponent implements OnInit {
   private driverService = inject(DriverService);
   private contractorService = inject(ContractorService);
   private documentService = inject(DocumentService);
+  private toastService = inject(ToastService);
 
   drivers: Driver[] = [];
   contractors: Contractor[] = [];
@@ -224,14 +227,15 @@ export class DriverListComponent implements OnInit {
     this.driverService.approveDriver(id).subscribe({
       next: (res) => {
         if (res.success) {
+          this.toastService.showSuccess('✓ Driver approved successfully!');
           this.loadDrivers();
         } else {
-          alert('Failed to approve driver: ' + res.message);
+          this.toastService.showError('Failed to approve driver: ' + res.message);
         }
       },
       error: (err) => {
         console.error('Error approving driver:', err);
-        alert(err.error?.message || 'Error occurred');
+        this.toastService.showError(err.error?.message || 'Error occurred during approval');
       }
     });
   }
@@ -242,14 +246,15 @@ export class DriverListComponent implements OnInit {
       this.driverService.rejectDriver(id).subscribe({
         next: (res) => {
           if (res.success) {
+            this.toastService.showSuccess('✓ Driver application rejected.');
             this.loadDrivers();
           } else {
-            alert('Failed to reject: ' + res.message);
+            this.toastService.showError('Failed to reject: ' + res.message);
           }
         },
         error: (err) => {
           console.error(err);
-          alert('Error occurred');
+          this.toastService.showError('Error occurred during rejection');
         }
       });
     }
@@ -375,28 +380,32 @@ export class DriverListComponent implements OnInit {
             this.documentService.associateDocuments(this.uploadedDocIds, 'DRIVER', savedDriverId).subscribe({
               next: () => {
                 this.isSaving = false;
+                this.toastService.showSuccess('✓ Driver and documents saved successfully!');
                 this.loadDrivers();
                 this.closeModal();
               },
               error: (assocErr) => {
                 this.isSaving = false;
-                this.formError = 'Driver saved, but document association failed: ' + (assocErr.error?.message || assocErr.message);
+                this.toastService.showError('Driver saved, but document association failed: ' + (assocErr.error?.message || assocErr.message));
                 this.loadDrivers();
               }
             });
           } else {
             this.isSaving = false;
+            this.toastService.showSuccess('✓ Driver saved successfully!');
             this.loadDrivers();
             this.closeModal();
           }
         } else {
           this.isSaving = false;
           this.formError = res.message || 'Failed to save driver';
+          this.toastService.showError(this.formError);
         }
       },
       error: (err) => {
         this.isSaving = false;
         this.formError = err.error?.message || 'Error occurred while saving driver';
+        this.toastService.showError(this.formError);
       }
     });
   }
@@ -407,14 +416,15 @@ export class DriverListComponent implements OnInit {
       this.driverService.deleteDriver(id).subscribe({
         next: (res) => {
           if (res.success) {
+            this.toastService.showSuccess('✓ Driver deleted successfully.');
             this.loadDrivers();
           } else {
-            alert('Failed to delete: ' + res.message);
+            this.toastService.showError('Failed to delete: ' + res.message);
           }
         },
         error: (err) => {
           console.error(err);
-          alert('Error occurred');
+          this.toastService.showError('Error occurred while deleting driver');
         }
       });
     }

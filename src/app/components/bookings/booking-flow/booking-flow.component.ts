@@ -6,6 +6,7 @@ import { ProductService, Product } from '../../../shared/services/product.servic
 import { AddressService, Address } from '../../../shared/services/address.service';
 import { PricingService } from '../../../shared/services/pricing.service';
 import { BookingService, Booking } from '../../../shared/services/booking.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-booking-flow',
@@ -20,6 +21,7 @@ export class BookingFlowComponent implements OnInit {
   private pricingService = inject(PricingService);
   private bookingService = inject(BookingService);
   private router = inject(Router);
+  private toastService = inject(ToastService);
 
   products: Product[] = [];
   addresses: Address[] = [];
@@ -131,17 +133,18 @@ export class BookingFlowComponent implements OnInit {
 
   saveAddress(): void {
     if (!this.newAddress.addressLine1 || !this.newAddress.city) {
-      alert('Address line 1 and City are required');
+      this.toastService.showError('Address line 1 and City are required');
       return;
     }
     this.addressService.saveAddress(this.newAddress).subscribe({
       next: (res) => {
         if (res.success) {
+          this.toastService.showSuccess('✓ Address saved successfully!');
           this.closeAddressModal();
           this.loadAddresses();
         }
       },
-      error: (err) => alert('Failed to save address')
+      error: (err) => this.toastService.showError('Failed to save address')
     });
   }
 
@@ -160,16 +163,16 @@ export class BookingFlowComponent implements OnInit {
     this.bookingService.addToCart(cartItem).subscribe({
       next: (res) => {
         if (res.success) {
-          alert('Item added to booking cart!');
+          this.toastService.showSuccess('✓ Item added to booking cart!');
         }
       },
-      error: (err) => alert(err.error?.message || 'Failed to add to cart')
+      error: (err) => this.toastService.showError(err.error?.message || 'Failed to add to cart')
     });
   }
 
   confirmBookingNow(): void {
     if (!this.selectedProduct || !this.selectedProduct.id) {
-      alert('Please select a product');
+      this.toastService.showError('Please select a product');
       return;
     }
     this.submittingBooking = true;
@@ -189,13 +192,13 @@ export class BookingFlowComponent implements OnInit {
       next: (res) => {
         this.submittingBooking = false;
         if (res.success) {
-          alert(`Booking Confirmed! Number: ${res.data.bookingNumber}`);
+          this.toastService.showSuccess(`✓ Booking Confirmed! Number: ${res.data.bookingNumber}`);
           this.router.navigate(['/bookings']);
         }
       },
       error: (err) => {
         this.submittingBooking = false;
-        alert(err.error?.message || 'Booking confirmation failed');
+        this.toastService.showError(err.error?.message || 'Booking confirmation failed');
       }
     });
   }

@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { CustomerService, User } from '../../../shared/services/customer.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 interface BookingHistory {
   id: string;
@@ -23,6 +24,7 @@ export class CustomerProfileComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private customerService = inject(CustomerService);
+  private toastService = inject(ToastService);
 
   isLoading = true;
 
@@ -109,7 +111,7 @@ export class CustomerProfileComponent implements OnInit {
       error: (err) => {
         this.isLoading = false;
         console.error('Error loading customer profile:', err);
-        alert('Failed to load customer details.');
+        this.toastService.showError('Failed to load customer details.');
       }
     });
   }
@@ -145,13 +147,14 @@ export class CustomerProfileComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.customer.status = response.data.active ? 'Active' : 'Suspended';
+          this.toastService.showSuccess(`✓ Customer status updated to ${this.customer.status}`);
         } else {
-          alert('Failed to update status: ' + response.message);
+          this.toastService.showError('Failed to update status: ' + response.message);
         }
       },
       error: (err) => {
         console.error('Error updating status:', err);
-        alert('Failed to update status.');
+        this.toastService.showError('Failed to update status.');
       }
     });
   }
@@ -161,14 +164,15 @@ export class CustomerProfileComponent implements OnInit {
       this.customerService.deleteCustomerById(Number(this.customer.id)).subscribe({
         next: (response) => {
           if (response.success) {
+            this.toastService.showSuccess('✓ Customer deleted successfully.');
             this.router.navigate(['/customers']);
           } else {
-            alert('Failed to delete customer: ' + response.message);
+            this.toastService.showError('Failed to delete customer: ' + response.message);
           }
         },
         error: (err) => {
           console.error('Error deleting customer:', err);
-          alert('Failed to delete customer.');
+          this.toastService.showError('Failed to delete customer.');
         }
       });
     }

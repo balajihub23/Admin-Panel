@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DriverService, Driver } from '../../../shared/services/driver.service';
 import { DocumentService, DocumentInfo } from '../../../shared/services/document.service';
 import { BookingService } from '../../../shared/services/booking.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-driver-profile',
@@ -18,6 +19,7 @@ export class DriverProfileComponent implements OnInit {
   private driverService = inject(DriverService);
   private documentService = inject(DocumentService);
   private bookingService = inject(BookingService);
+  private toastService = inject(ToastService);
 
   driverId = 0;
   driver: Driver | null = null;
@@ -160,12 +162,13 @@ export class DriverProfileComponent implements OnInit {
     this.driverService.approveDriver(this.driverId).subscribe({
       next: (res) => {
         if (res.success) {
+          this.toastService.showSuccess('✓ Driver approved successfully!');
           this.loadDriverDetails();
         } else {
-          alert('Error: ' + res.message);
+          this.toastService.showError('Error: ' + res.message);
         }
       },
-      error: (err) => alert(err.error?.message || 'Error')
+      error: (err) => this.toastService.showError(err.error?.message || 'Error occurred during approval')
     });
   }
 
@@ -175,12 +178,13 @@ export class DriverProfileComponent implements OnInit {
       this.driverService.suspendDriver(this.driverId).subscribe({
         next: (res) => {
           if (res.success) {
+            this.toastService.showSuccess('✓ Driver account suspended.');
             this.loadDriverDetails();
           } else {
-            alert('Error suspending account: ' + res.message);
+            this.toastService.showError('Error suspending account: ' + res.message);
           }
         },
-        error: (err) => alert(err.error?.message || 'Error occurred')
+        error: (err) => this.toastService.showError(err.error?.message || 'Error occurred during suspension')
       });
     }
   }
@@ -190,12 +194,13 @@ export class DriverProfileComponent implements OnInit {
     this.driverService.unsuspendDriver(this.driverId).subscribe({
       next: (res) => {
         if (res.success) {
+          this.toastService.showSuccess('✓ Driver account reactivated.');
           this.loadDriverDetails();
         } else {
-          alert('Error unsuspending account: ' + res.message);
+          this.toastService.showError('Error unsuspending account: ' + res.message);
         }
       },
-      error: (err) => alert(err.error?.message || 'Error occurred')
+      error: (err) => this.toastService.showError(err.error?.message || 'Error occurred during activation')
     });
   }
 

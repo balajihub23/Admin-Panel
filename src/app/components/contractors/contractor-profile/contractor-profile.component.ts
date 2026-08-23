@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContractorService, Contractor } from '../../../shared/services/contractor.service';
 import { DocumentService, DocumentInfo } from '../../../shared/services/document.service';
 import { BookingService } from '../../../shared/services/booking.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-contractor-profile',
@@ -18,6 +19,7 @@ export class ContractorProfileComponent implements OnInit {
   private contractorService = inject(ContractorService);
   private documentService = inject(DocumentService);
   private bookingService = inject(BookingService);
+  private toastService = inject(ToastService);
 
   contractorId = 0;
   contractor: Contractor | null = null;
@@ -194,12 +196,13 @@ export class ContractorProfileComponent implements OnInit {
     this.contractorService.approveContractor(this.contractorId).subscribe({
       next: (res) => {
         if (res.success) {
+          this.toastService.showSuccess('✓ Contractor approved successfully!');
           this.loadContractorDetails();
         } else {
-          alert('Error: ' + res.message);
+          this.toastService.showError('Error: ' + res.message);
         }
       },
-      error: (err) => alert(err.error?.message || 'Error')
+      error: (err) => this.toastService.showError(err.error?.message || 'Error occurred during approval')
     });
   }
 
@@ -209,12 +212,13 @@ export class ContractorProfileComponent implements OnInit {
       this.contractorService.suspendContractor(this.contractorId).subscribe({
         next: (res) => {
           if (res.success) {
+            this.toastService.showSuccess('✓ Contractor account suspended.');
             this.loadContractorDetails();
           } else {
-            alert('Error suspending account: ' + res.message);
+            this.toastService.showError('Error suspending account: ' + res.message);
           }
         },
-        error: (err) => alert(err.error?.message || 'Error occurred')
+        error: (err) => this.toastService.showError(err.error?.message || 'Error occurred during suspension')
       });
     }
   }
@@ -224,12 +228,13 @@ export class ContractorProfileComponent implements OnInit {
     this.contractorService.unsuspendContractor(this.contractorId).subscribe({
       next: (res) => {
         if (res.success) {
+          this.toastService.showSuccess('✓ Contractor account reactivated.');
           this.loadContractorDetails();
         } else {
-          alert('Error unsuspending account: ' + res.message);
+          this.toastService.showError('Error unsuspending account: ' + res.message);
         }
       },
-      error: (err) => alert(err.error?.message || 'Error occurred')
+      error: (err) => this.toastService.showError(err.error?.message || 'Error occurred during activation')
     });
   }
 
