@@ -34,6 +34,7 @@ export class SidebarComponent implements OnInit {
       this.menuService.getAccessibleMenus().subscribe({
         next: (res: any) => {
           if (res.success && res.data) {
+            localStorage.setItem('userMenus', JSON.stringify(res.data));
             this.buildSidebar(res.data);
           }
         },
@@ -72,29 +73,13 @@ export class SidebarComponent implements OnInit {
   }
 
   private buildSidebar(menusList: any[]) {
-    const mapped: SidebarItem[] = [];
-    let addedPartnersMenu = false;
-
-    for (const menu of menusList) {
-      const code = (menu.menuCode || '').toLowerCase();
-      const path = (menu.routePath || '').toLowerCase();
-
-      if (code === 'contractors' || code === 'drivers' || code === 'partners' ||
-          path === '/contractors' || path === '/drivers' || path === '/partners') {
-        if (!addedPartnersMenu) {
-          mapped.push({
-            name: 'Partners',
-            code: 'partners',
-            icon: 'drivers',
-            route: '/partners'
-          });
-          addedPartnersMenu = true;
-        }
-      } else {
-        mapped.push(this.mapMenuToSidebarItem(menu));
-      }
+    if (!menusList || !Array.isArray(menusList)) {
+      this.sidebarItems = [];
+      return;
     }
-    this.sidebarItems = mapped;
+
+    // Completely dynamic: Render menus directly from backend API / DB
+    this.sidebarItems = menusList.map((menu: any) => this.mapMenuToSidebarItem(menu));
   }
 
   private mapMenuToSidebarItem(menu: any): SidebarItem {
@@ -110,18 +95,15 @@ export class SidebarComponent implements OnInit {
   }
 
   private mapIconCode(icon: string): string {
-    const code = icon.toLowerCase();
+    const code = (icon || '').toLowerCase();
     if (code.includes('dash') || code.includes('home')) return 'dashboard';
-    if (code.includes('people') || code.includes('cust') || code.includes('contract')) return 'customers';
+    if (code.includes('partner') || code.includes('people') || code.includes('cust') || code.includes('contract')) return 'customers';
     if (code.includes('driver')) return 'drivers';
-    if (code.includes('owner')) return 'owners';
-    if (code.includes('truck') || code.includes('veh')) return 'vehicles';
+    if (code.includes('product') || code.includes('truck') || code.includes('veh') || code.includes('box')) return 'vehicles';
     if (code.includes('calendar') || code.includes('book')) return 'bookings';
-    if (code.includes('pulse') || code.includes('live')) return 'live';
     if (code.includes('money') || code.includes('pay')) return 'payments';
     if (code.includes('chat') || code.includes('supp')) return 'support';
-    if (code.includes('chart') || code.includes('anal')) return 'analytics';
-    if (code.includes('bull') || code.includes('mark')) return 'marketing';
+    if (code.includes('settings') || code.includes('set')) return 'settings';
     return 'settings';
   }
 }
