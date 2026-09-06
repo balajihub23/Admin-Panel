@@ -6,13 +6,9 @@ import { environment } from '../../../environments/environment';
 export interface BookingSetting {
   id?: number;
   settingKey?: string;
-  gateway?: string;
-  paymentEnabled?: boolean;
   keyId?: string;
   keySecret?: string;
-  webhookSecret?: string;
   currency?: string;
-  environment?: string;
   assignmentType?: string;
   initialRadiusKm?: number;
   radiusIncrementKm?: number;
@@ -20,6 +16,7 @@ export interface BookingSetting {
   assignmentTimeoutSeconds?: number;
   maxLocationAgeSeconds?: number;
   notifyAdminWhenUnassigned?: boolean;
+  mapKey?: string;
 }
 
 export interface BookingAssignment {

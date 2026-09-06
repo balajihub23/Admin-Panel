@@ -13,10 +13,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 })
 export class BookingSettingComponent implements OnInit {
   settings: BookingSetting = {
-    gateway: 'RAZORPAY',
-    paymentEnabled: true,
     currency: 'INR',
-    environment: 'TEST',
     assignmentType: 'AUTO',
     initialRadiusKm: 5.0,
     radiusIncrementKm: 5.0,

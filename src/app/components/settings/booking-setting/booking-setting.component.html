@@ -15,31 +15,8 @@
     <div class="card">
       <div class="card-header">
         <h3>Payment Gateway (Razorpay)</h3>
-        <span class="badge" [class.enabled]="settings.paymentEnabled" [class.disabled]="!settings.paymentEnabled">
-          {{ settings.paymentEnabled ? 'ENABLED' : 'DISABLED' }}
-        </span>
       </div>
       <div class="card-body">
-        <div class="form-group inline-toggle">
-          <label>Enable Online Payment Gateway</label>
-          <input type="checkbox" [(ngModel)]="settings.paymentEnabled" class="toggle-checkbox" />
-        </div>
-
-        <div class="form-group">
-          <label>Gateway</label>
-          <select [(ngModel)]="settings.gateway" class="form-control">
-            <option value="RAZORPAY">Razorpay</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Environment</label>
-          <select [(ngModel)]="settings.environment" class="form-control">
-            <option value="TEST">TEST Mode</option>
-            <option value="LIVE">LIVE Production Mode</option>
-          </select>
-        </div>
-
         <div class="form-group">
           <label>Razorpay Key ID</label>
           <input type="text" [(ngModel)]="settings.keyId" placeholder="rzp_test_..." class="form-control" />
@@ -52,14 +29,14 @@
         </div>
 
         <div class="form-group">
-          <label>Razorpay Webhook Secret</label>
-          <input type="password" [(ngModel)]="settings.webhookSecret" placeholder="••••••••••••••••" class="form-control" />
-          <small class="field-hint">Used for server-side webhook signature validation.</small>
+          <label>Currency</label>
+          <input type="text" [(ngModel)]="settings.currency" placeholder="INR" class="form-control" />
         </div>
 
         <div class="form-group">
-          <label>Currency</label>
-          <input type="text" [(ngModel)]="settings.currency" placeholder="INR" class="form-control" />
+          <label>Google Maps API Key (mapKey)</label>
+          <input type="text" [(ngModel)]="settings.mapKey" placeholder="AIzaSy..." class="form-control" />
+          <small class="field-hint">Used for auto-location detection & reverse geocoding in mobile client apps.</small>
         </div>
       </div>
     </div>
