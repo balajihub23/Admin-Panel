@@ -1,0 +1,374 @@
+<div class="payment-management animate-fade-in">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1>Earnings & Payments Gateway</h1>
+      <p class="subtitle">Audit client billing statements, process vendor disbursements, and track total net revenue.</p>
+    </div>
+    <div class="header-actions">
+      <button class="export-btn btn-secondary" (click)="exportCsv()" title="Export filtered records to CSV">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+      </button>
+
+      <button class="refresh-btn btn-primary" (click)="refreshData()" [disabled]="isRefreshing" title="Refresh data">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          [class.spinning]="isRefreshing" class="btn-icon">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+        </svg>
+        {{ isRefreshing ? 'Reloading...' : 'Reload Data' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs: Client Booking Payments vs Driver Payout Requests -->
+  <div class="payment-tabs-container">
+    <button class="tab-btn" [class.active]="activeTab === 'CLIENT_PAYMENTS'" (click)="activeTab = 'CLIENT_PAYMENTS'">
+      💳 Client Booking Payments ({{ filteredTransactions.length }})
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'DRIVER_PAYOUTS'" (click)="activeTab = 'DRIVER_PAYOUTS'">
+      🏦 Driver Payout Requests ({{ filteredPayouts.length }})
+    </button>
+  </div>
+
+  <!-- ==================== TAB 1: CLIENT BOOKING PAYMENTS ==================== -->
+  @if (activeTab === 'CLIENT_PAYMENTS') {
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card premium-card">
+        <div class="stat-card-header">
+          <div class="stat-icon-wrapper blue">📄</div>
+          <span class="badge-tag green">+18.3% MoM</span>
+        </div>
+        <div class="stat-card-body">
+          <span class="stat-title">GROSS REVENUE</span>
+          <h2 class="stat-value text-primary">₹{{ grossRevenue | number:'1.2-2' }}</h2>
+        </div>
+      </div>
+
+      <div class="stat-card premium-card">
+        <div class="stat-card-header">
+          <div class="stat-icon-wrapper green">✓</div>
+          <span class="badge-tag info">Completed Paid</span>
+        </div>
+        <div class="stat-card-body">
+          <span class="stat-title">COMPLETED SETTLEMENTS</span>
+          <h2 class="stat-value text-success">₹{{ completedSettlement | number:'1.2-2' }}</h2>
+        </div>
+      </div>
+
+      <div class="stat-card premium-card">
+        <div class="stat-card-header">
+          <div class="stat-icon-wrapper purple">🔒</div>
+          <span class="badge-tag warning">Settles in 24 hrs</span>
+        </div>
+        <div class="stat-card-body">
+          <span class="stat-title">PENDING SETTLEMENT</span>
+          <h2 class="stat-value text-warning">₹{{ pendingSettlement | number:'1.2-2' }}</h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="table-container premium-card">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            [(ngModel)]="searchQuery" 
+            (input)="applyFilters()" 
+            placeholder="Search transaction ID, booking #, customer..."
+          />
+        </div>
+
+        <div class="filters">
+          <select class="filter-select" [(ngModel)]="selectedStatusFilter" (change)="applyFilters()">
+            <option value="All">All Statuses</option>
+            <option value="PENDING">Pending Payment</option>
+            <option value="IN_PROGRESS">In Progress / Processing</option>
+            <option value="COMPLETED">Completed / Paid</option>
+            <option value="FAILED">Failed Payment</option>
+          </select>
+
+          <button class="reload-icon-btn" (click)="refreshData()" [disabled]="isRefreshing" title="Reload transactions data">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" [class.spinning]="isRefreshing">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+          </button>
+
+          <button 
+            class="clear-filters-btn" 
+            (click)="resetFilters()" 
+            *ngIf="searchQuery.trim() || selectedStatusFilter !== 'All'" 
+            title="Clear filters">
+            ✕ Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="responsive-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>TRANSACTION ID</th>
+              <th>ASSOCIATED BOOKING</th>
+              <th>BILLING ACCOUNT</th>
+              <th>AMOUNT CHARGED</th>
+              <th>GATEWAY REF</th>
+              <th>PAYMENT STATUS</th>
+              <th class="actions-col">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="isLoadingTransactions">
+              <td colspan="7" class="text-center text-muted" style="padding: 3rem;">
+                <div class="table-spinner-container">
+                  <div class="table-spinner"></div>
+                  <span>Loading live database transactions...</span>
+                </div>
+              </td>
+            </tr>
+
+            <ng-container *ngIf="!isLoadingTransactions">
+              <tr *ngFor="let tx of filteredTransactions">
+                <td class="font-bold text-dark">{{ tx.transactionId }}</td>
+                <td class="font-semibold text-primary">#{{ tx.bookingNumber || ('BK-' + tx.bookingId) }}</td>
+                <td>
+                  <div class="user-cell">
+                    <span class="user-name">{{ tx.billingAccount }}</span>
+                    <span class="user-phone text-muted">{{ tx.customerPhone }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="amount-pill">₹{{ tx.amountCharged | number:'1.2-2' }}</span>
+                </td>
+                <td class="text-muted text-mono">{{ tx.gatewayRef }}</td>
+                <td>
+                  <span class="status-badge"
+                    [class.status-paid]="tx.paymentStatus === 'PAID' || tx.paymentStatus === 'SETTLED' || tx.paymentStatus === 'COMPLETED'"
+                    [class.status-pending]="tx.paymentStatus === 'PENDING' || tx.paymentStatus === 'PROCESSING' || tx.paymentStatus === 'IN_PROGRESS'"
+                    [class.status-failed]="tx.paymentStatus === 'FAILED'">
+                    {{ tx.paymentStatus === 'PAID' ? 'Completed' : tx.paymentStatus }}
+                  </span>
+                </td>
+                <td class="actions-col">
+                  <select class="status-select-inline" [ngModel]="tx.paymentStatus" (change)="onChangePaymentStatus(tx, $any($event.target).value)">
+                    <option value="PAID">Mark Completed / Paid</option>
+                    <option value="PROCESSING">Mark In Progress</option>
+                    <option value="PENDING">Mark Pending</option>
+                    <option value="FAILED">Mark Failed</option>
+                  </select>
+                </td>
+              </tr>
+
+              <tr *ngIf="filteredTransactions.length === 0">
+                <td colspan="7" class="text-center text-muted" style="padding: 2.5rem;">
+                  No payment transactions found matching filter criteria.
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-footer">
+        <div class="total-records">Total Billing Statements: <span class="font-bold">{{ filteredTransactions.length }}</span></div>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== TAB 2: DRIVER PAYOUT REQUESTS ==================== -->
+  @if (activeTab === 'DRIVER_PAYOUTS') {
+    <!-- Stats Grid for Payouts -->
+    <div class="stats-grid">
+      <div class="stat-card premium-card">
+        <div class="stat-card-header">
+          <div class="stat-icon-wrapper blue">💵</div>
+          <span class="badge-tag info">{{ payouts.length }} Requests</span>
+        </div>
+        <div class="stat-card-body">
+          <span class="stat-title">TOTAL PAYOUT REQUESTS</span>
+          <h2 class="stat-value text-primary">₹{{ totalPayoutsAmount | number:'1.2-2' }}</h2>
+        </div>
+      </div>
+
+      <div class="stat-card premium-card">
+        <div class="stat-card-header">
+          <div class="stat-icon-wrapper green">✓</div>
+          <span class="badge-tag green">Processed & Paid</span>
+        </div>
+        <div class="stat-card-body">
+          <span class="stat-title">COMPLETED PAYOUTS</span>
+          <h2 class="stat-value text-success">₹{{ completedPayoutsAmount | number:'1.2-2' }}</h2>
+        </div>
+      </div>
+
+      <div class="stat-card premium-card">
+        <div class="stat-card-header">
+          <div class="stat-icon-wrapper purple">⌛</div>
+          <span class="badge-tag warning">Requires Admin Action</span>
+        </div>
+        <div class="stat-card-body">
+          <span class="stat-title">PENDING APPROVAL</span>
+          <h2 class="stat-value text-warning">₹{{ pendingPayoutsAmount | number:'1.2-2' }}</h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="table-container premium-card">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="text" 
+            [(ngModel)]="payoutSearchQuery" 
+            (input)="applyPayoutFilters()" 
+            placeholder="Search payout ref, driver name, phone, bank..."
+          />
+        </div>
+
+        <div class="filters">
+          <select class="filter-select" [(ngModel)]="selectedPayoutStatusFilter" (change)="applyPayoutFilters()">
+            <option value="All">All Statuses</option>
+            <option value="PENDING">Pending Approval</option>
+            <option value="COMPLETED">Completed / Paid Out</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+
+          <button class="reload-icon-btn" (click)="refreshData()" [disabled]="isRefreshing" title="Reload payout requests">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" [class.spinning]="isRefreshing">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+          </button>
+
+          <button 
+            class="clear-filters-btn" 
+            (click)="resetPayoutFilters()" 
+            *ngIf="payoutSearchQuery.trim() || selectedPayoutStatusFilter !== 'All'" 
+            title="Clear filters">
+            ✕ Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="responsive-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>REF #</th>
+              <th>DRIVER NAME & PHONE</th>
+              <th>WITHDRAWAL AMOUNT</th>
+              <th>BANK / PAYOUT DESTINATION</th>
+              <th>REQUESTED DATE</th>
+              <th>STATUS</th>
+              <th class="actions-col">ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="isLoadingPayouts">
+              <td colspan="7" class="text-center text-muted" style="padding: 3rem;">
+                <div class="table-spinner-container">
+                  <div class="table-spinner"></div>
+                  <span>Loading payout requests...</span>
+                </div>
+              </td>
+            </tr>
+
+            <ng-container *ngIf="!isLoadingPayouts">
+              <tr *ngFor="let p of filteredPayouts">
+                <td class="font-bold text-primary">{{ p.referenceNumber || ('WD-' + p.id) }}</td>
+                <td>
+                  <div class="user-cell">
+                    <span class="user-name">{{ p.driverName || ('Driver #' + p.driverId) }}</span>
+                    <span class="user-phone text-muted">{{ p.driverPhone }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="amount-pill green">₹{{ p.amount | number:'1.2-2' }}</span>
+                </td>
+                <td>
+                  <span class="bank-dest">{{ p.bankAccountDetails || 'Linked Bank' }}</span>
+                </td>
+                <td class="text-muted text-sm">{{ p.requestedAt || 'Recently' }}</td>
+                <td>
+                  <span class="status-badge"
+                    [class.status-paid]="p.status === 'PROCESSED' || p.status === 'APPROVED' || p.status === 'COMPLETED'"
+                    [class.status-pending]="p.status === 'PENDING'"
+                    [class.status-failed]="p.status === 'REJECTED'">
+                    {{ p.status === 'PROCESSED' ? 'Completed' : p.status }}
+                  </span>
+                </td>
+                <td class="actions-col">
+                  <button *ngIf="p.status === 'PENDING'" class="btn-pay-action" (click)="openProcessModal(p)">
+                    💵 Pay / Mark Paid
+                  </button>
+                  <span *ngIf="p.status === 'PROCESSED' || p.status === 'APPROVED' || p.status === 'COMPLETED'" class="text-success font-bold text-sm">
+                    ✓ Paid Out
+                  </span>
+                  <span *ngIf="p.status === 'REJECTED'" class="text-danger font-bold text-sm">
+                    ✕ Rejected
+                  </span>
+                </td>
+              </tr>
+
+              <tr *ngIf="filteredPayouts.length === 0">
+                <td colspan="7" class="text-center text-muted" style="padding: 2.5rem;">
+                  No driver payout requests found matching filter criteria.
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination-footer">
+        <div class="total-records">Total Payout Requests: <span class="font-bold">{{ filteredPayouts.length }}</span></div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Process Payout Modal -->
+<div class="modal-backdrop" *ngIf="showProcessModal" (click)="showProcessModal = false">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <h2>Process Driver Payout</h2>
+    <p class="sub-text">Confirm payment of <strong>₹{{ selectedPayout?.amount | number:'1.2-2' }}</strong> to <strong>{{ selectedPayout?.driverName }}</strong></p>
+
+    <div class="detail-box">
+      <p><strong>Ref #:</strong> {{ selectedPayout?.referenceNumber }}</p>
+      <p><strong>Payout Destination:</strong> {{ selectedPayout?.bankAccountDetails }}</p>
+      <p><strong>Phone:</strong> {{ selectedPayout?.driverPhone }}</p>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Payment UTR / Transaction Note (Optional)</label>
+      <input type="text" class="form-control" [(ngModel)]="adminRemarks" placeholder="e.g. UTR #123456789 or Bank Transfer Ref" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="showProcessModal = false">Cancel</button>
+      <button class="btn-confirm-pay" [disabled]="isSubmittingPayout" (click)="confirmProcessPayout()">
+        {{ isSubmittingPayout ? 'Processing...' : 'Confirm & Mark as Paid' }}
+      </button>
+    </div>
+  </div>
+</div>

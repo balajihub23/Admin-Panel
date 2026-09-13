@@ -1,0 +1,203 @@
+<div class="payout-management animate-fade-in">
+  <div class="header">
+    <div>
+      <h1>Driver Payout & Withdrawal Management</h1>
+      <p class="subtitle">Review driver withdrawal requests, verify bank details, and process payouts</p>
+    </div>
+    <button class="refresh-btn btn-primary" (click)="refreshData()" [class.spinning]="isRefreshing" title="Refresh list">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+      </svg>
+      Refresh List
+    </button>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-card premium-card">
+      <span class="stat-title">Total Requests</span>
+      <span class="stat-value text-primary">₹{{totalAmount | number:'1.0-2'}}</span>
+      <span class="stat-sub">{{totalCount}} Total Withdrawals</span>
+    </div>
+    <div class="stat-card premium-card">
+      <span class="stat-title">Pending Payouts</span>
+      <span class="stat-value text-warning">₹{{pendingAmount | number:'1.0-2'}}</span>
+      <span class="stat-sub">{{pendingCount}} Pending Approval</span>
+    </div>
+    <div class="stat-card premium-card">
+      <span class="stat-title">Paid / Processed</span>
+      <span class="stat-value text-success">₹{{processedAmount | number:'1.0-2'}}</span>
+      <span class="stat-sub">{{processedCount}} Paid Out</span>
+    </div>
+    <div class="stat-card premium-card">
+      <span class="stat-title">Rejected Requests</span>
+      <span class="stat-value text-danger">{{rejectedCount}}</span>
+      <span class="stat-sub">Declined Requests</span>
+    </div>
+  </div>
+
+  <!-- Main Table Container -->
+  <div class="table-container premium-card">
+    <div class="table-toolbar">
+      <div class="search-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          (input)="applyFilters()" 
+          placeholder="Search by ref #, driver name, phone, or bank details..."
+        />
+      </div>
+
+      <div class="filters">
+        <select class="filter-select" [(ngModel)]="selectedStatusFilter" (change)="applyFilters()">
+          <option value="All">All Statuses</option>
+          <option value="PENDING">Pending Approval</option>
+          <option value="PROCESSED">Paid / Processed</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+
+        <button 
+          class="clear-filters-btn" 
+          (click)="resetFilters()" 
+          *ngIf="searchQuery.trim() || selectedStatusFilter !== 'All'" 
+          title="Clear filters">
+          ✕ Clear Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Ref #</th>
+          <th>Driver</th>
+          <th>Requested Amount</th>
+          <th>Bank / Payout Destination</th>
+          <th>Requested Date</th>
+          <th>Status</th>
+          <th class="actions-col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="isLoading">
+          <td colspan="7" class="text-center text-muted" style="padding: 3rem;">
+            <div class="table-spinner-container">
+              <div class="table-spinner"></div>
+              <span>Loading payout requests...</span>
+            </div>
+          </td>
+        </tr>
+
+        <ng-container *ngIf="!isLoading">
+          <tr *ngFor="let p of filteredPayouts">
+            <td class="font-bold text-primary">{{p.referenceNumber || ('WD-' + p.id)}}</td>
+            <td>
+              <div class="user-cell">
+                <span class="user-name">{{p.driverName || ('Driver #' + p.driverId)}}</span>
+                <span class="user-phone text-muted">{{p.driverPhone || ''}}</span>
+              </div>
+            </td>
+            <td>
+              <span class="amount-badge">₹{{p.amount | number:'1.2-2'}}</span>
+            </td>
+            <td>
+              <div class="bank-details-cell">
+                <span class="bank-dest">{{p.bankAccountDetails || 'Default Linked Bank'}}</span>
+              </div>
+            </td>
+            <td class="text-muted text-sm">{{p.requestedAt || 'Recently'}}</td>
+            <td>
+              <span class="status-badge"
+                [class.status-pending]="p.status === 'PENDING'"
+                [class.status-processed]="p.status === 'PROCESSED' || p.status === 'APPROVED'"
+                [class.status-rejected]="p.status === 'REJECTED'">
+                {{p.status}}
+              </span>
+            </td>
+            <td class="actions-col">
+              <ng-container *ngIf="p.status === 'PENDING'">
+                <button class="action-btn btn-pay" (click)="openProcessModal(p)" title="Mark as Paid">
+                  💵 Pay / Mark Paid
+                </button>
+                <button class="action-btn btn-reject" (click)="openRejectModal(p)" title="Reject Request">
+                  ✕ Reject
+                </button>
+              </ng-container>
+
+              <span *ngIf="p.status === 'PROCESSED' || p.status === 'APPROVED'" class="text-success font-bold text-sm">
+                ✓ Paid Out
+              </span>
+
+              <span *ngIf="p.status === 'REJECTED'" class="text-danger font-bold text-sm">
+                ✕ Rejected
+              </span>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredPayouts.length === 0">
+            <td colspan="7" class="text-center text-muted" style="padding: 2.5rem;">
+              No payout requests found matching criteria.
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+
+    <div class="pagination-footer">
+      <div class="total-records">Total Requests: <span class="font-bold">{{filteredPayouts.length}}</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PROCESS / PAY MODAL ==================== -->
+<div class="modal-backdrop" *ngIf="showProcessModal" (click)="showProcessModal = false">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <h2>Process Payout</h2>
+    <p class="sub-text">Confirm payment of <strong>₹{{selectedPayout?.amount}}</strong> to driver <strong>{{selectedPayout?.driverName}}</strong></p>
+
+    <div class="detail-box">
+      <p><strong>Ref #:</strong> {{selectedPayout?.referenceNumber}}</p>
+      <p><strong>Payout Destination:</strong> {{selectedPayout?.bankAccountDetails}}</p>
+      <p><strong>Driver Contact:</strong> {{selectedPayout?.driverPhone}}</p>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Payment Transaction Note / Reference (Optional)</label>
+      <input type="text" class="form-control" [(ngModel)]="adminRemarks" placeholder="e.g. UTR #123456789 or UPI Transfer Ref" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="showProcessModal = false">Cancel</button>
+      <button class="btn-confirm-pay" [disabled]="isSubmittingAction" (click)="confirmProcessPayout()">
+        {{ isSubmittingAction ? 'Processing...' : 'Confirm & Mark as Paid' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== REJECT MODAL ==================== -->
+<div class="modal-backdrop" *ngIf="showRejectModal" (click)="showRejectModal = false">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <h2>Reject Payout Request</h2>
+    <p class="sub-text">Decline payout request of <strong>₹{{selectedPayout?.amount}}</strong> for <strong>{{selectedPayout?.driverName}}</strong></p>
+
+    <div class="form-group">
+      <label class="form-label">Reason for Rejection *</label>
+      <input type="text" class="form-control" [(ngModel)]="adminRemarks" placeholder="e.g. Incorrect bank account details" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="showRejectModal = false">Cancel</button>
+      <button class="btn-confirm-reject" [disabled]="isSubmittingAction" (click)="confirmRejectPayout()">
+        {{ isSubmittingAction ? 'Rejecting...' : 'Reject Request' }}
+      </button>
+    </div>
+  </div>
+</div>

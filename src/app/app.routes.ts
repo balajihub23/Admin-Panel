@@ -24,7 +24,8 @@ export const routes: Routes = [
       { path: 'pricing', loadComponent: () => import('./components/pricing/pricing-list/pricing-list.component').then(m => m.PricingListComponent) },
       { path: 'bookings/new', loadComponent: () => import('./components/bookings/booking-flow/booking-flow.component').then(m => m.BookingFlowComponent) },
       { path: 'bookings', loadComponent: () => import('./components/bookings/booking-list/booking-list.component').then(m => m.BookingListComponent) },
-      { path: 'payments', component: SubpageComponent },
+      { path: 'payments', loadComponent: () => import('./components/payments/payment-list/payment-list.component').then(m => m.PaymentListComponent) },
+      { path: 'payouts', loadComponent: () => import('./components/payouts/payout-list/payout-list.component').then(m => m.PayoutListComponent) },
       // { path: 'settings', loadComponent: () => import('./components/settings/role-permission-setup/role-permission-setup.component').then(m => m.RolePermissionSetupComponent) },
       { path: 'settings', loadComponent: () => import('./components/settings/booking-setting/booking-setting.component').then(m => m.BookingSettingComponent) },
       { path: 'settings/menus', loadComponent: () => import('./components/settings/menu-list/menu-list.component').then(m => m.MenuListComponent) },
@@ -34,7 +35,7 @@ export const routes: Routes = [
       { path: 'owners', component: SubpageComponent },
       { path: 'vehicles', component: SubpageComponent },
       { path: 'operations', component: SubpageComponent },
-      { path: 'support', component: SubpageComponent },
+      { path: 'support', loadComponent: () => import('./components/support/support-list/support-list.component').then(m => m.SupportListComponent) },
       { path: 'analytics', component: SubpageComponent },
       { path: 'marketing', component: SubpageComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
