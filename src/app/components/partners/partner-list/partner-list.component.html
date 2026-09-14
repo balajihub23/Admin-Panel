@@ -288,6 +288,10 @@
         </div>
 
         <div class="card-actions">
+          <button class="btn-sm btn-outline" (click)="navigateToProfile(item)" style="margin-right: auto;">
+            👁 View Profile
+          </button>
+
           <!-- Pending: Show Approve & Reject -->
           <ng-container *ngIf="item.status === 'PENDING_VERIFICATION'">
             <button class="btn-approve" (click)="approvePartner(item)" [disabled]="item.isProcessing">

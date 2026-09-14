@@ -58,14 +58,14 @@ export const jwtInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, nex
                   return next(retryReq);
                 } else {
                   localStorage.clear();
-                  router.navigate(['/login']);
+                  router.navigate(['/service-error'], { queryParams: { code: '401', title: 'Session Expired', message: 'Your session has expired. Please log in again.' } });
                   return throwError(() => error);
                 }
               }),
               catchError((refreshErr) => {
                 isRefreshing = false;
                 localStorage.clear();
-                router.navigate(['/login']);
+                router.navigate(['/service-error'], { queryParams: { code: '401', title: 'Session Expired', message: 'Unable to refresh session. Please log in again.' } });
                 return throwError(() => refreshErr);
               })
             );
@@ -86,8 +86,10 @@ export const jwtInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, nex
           }
         } else {
           localStorage.clear();
-          router.navigate(['/login']);
+          router.navigate(['/service-error'], { queryParams: { code: '401', title: 'Unauthorized Access', message: 'Authentication token missing or invalid. Please log in.' } });
         }
+      } else if ((error.status === 503 || error.status === 0) && typeof window !== 'undefined') {
+        router.navigate(['/service-error'], { queryParams: { code: '503', title: 'Service Down', message: 'Rentron backend service is currently unreachable.' } });
       }
       return throwError(() => error);
     })

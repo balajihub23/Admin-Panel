@@ -9,6 +9,7 @@ import { authGuard } from './shared/guards/auth.guard';
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'service-error', loadComponent: () => import('./components/service-error/service-error.component').then(m => m.ServiceErrorComponent) },
   {
     path: '',
     component: AdminLayoutComponent,
