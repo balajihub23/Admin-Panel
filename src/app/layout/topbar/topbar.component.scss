@@ -143,13 +143,33 @@
         color: var(--text-main);
       }
 
+      .header-right-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
       .unread-count {
         font-size: 11px;
-        background-color: var(--warning-light);
-        color: var(--warning);
+        background-color: var(--warning-light, #FEF3C7);
+        color: var(--warning, #D97706);
         padding: 2px 8px;
         border-radius: 20px;
         font-weight: 700;
+      }
+
+      .mark-all-btn {
+        background: transparent;
+        border: none;
+        color: #2563EB;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0;
+
+        &:hover {
+          text-decoration: underline;
+        }
       }
     }
 

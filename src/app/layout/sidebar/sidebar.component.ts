@@ -75,11 +75,21 @@ export class SidebarComponent implements OnInit {
   private buildSidebar(menusList: any[]) {
     if (!menusList || !Array.isArray(menusList)) {
       this.sidebarItems = [];
-      return;
+    } else {
+      this.sidebarItems = menusList.map((menu: any) => this.mapMenuToSidebarItem(menu));
     }
 
-    // Completely dynamic: Render menus directly from backend API / DB
-    this.sidebarItems = menusList.map((menu: any) => this.mapMenuToSidebarItem(menu));
+    const hasVehicles = this.sidebarItems.some(item => 
+      item.route === '/vehicles' || (item.code && item.code.toLowerCase().includes('veh'))
+    );
+    if (!hasVehicles) {
+      this.sidebarItems.splice(2, 0, {
+        name: 'Vehicles',
+        code: 'VEHICLES',
+        icon: 'vehicles',
+        route: '/vehicles'
+      });
+    }
   }
 
   private mapMenuToSidebarItem(menu: any): SidebarItem {

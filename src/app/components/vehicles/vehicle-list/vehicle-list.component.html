@@ -1,0 +1,382 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Vehicles Verification Management</h1>
+      <p class="page-subtitle">Review, verify, and approve partner equipment registrations & machinery compliance details.</p>
+    </div>
+    <div class="header-actions">
+      <span class="pulse-badge" *ngIf="pendingCount > 0">{{ pendingCount }} Pending Approvals</span>
+    </div>
+  </div>
+
+  <!-- Metric KPI Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card" (click)="setTab('ALL')" [class.active-card]="activeTab === 'ALL'">
+      <div class="icon-box blue">🚜</div>
+      <div class="info">
+        <span class="val">{{ totalVehicles }}</span>
+        <span class="lbl">Total Vehicles</span>
+      </div>
+    </div>
+    <div class="metric-card" (click)="setTab('PENDING')" [class.active-card]="activeTab === 'PENDING'">
+      <div class="icon-box warning">⏳</div>
+      <div class="info">
+        <span class="val">{{ pendingCount }}</span>
+        <span class="lbl">Under Review</span>
+      </div>
+    </div>
+    <div class="metric-card" (click)="setTab('APPROVED')" [class.active-card]="activeTab === 'APPROVED'">
+      <div class="icon-box success">✓</div>
+      <div class="info">
+        <span class="val">{{ approvedCount }}</span>
+        <span class="lbl">Approved & Active</span>
+      </div>
+    </div>
+    <div class="metric-card" (click)="setTab('REJECTED')" [class.active-card]="activeTab === 'REJECTED'">
+      <div class="icon-box danger">✕</div>
+      <div class="info">
+        <span class="val">{{ rejectedCount }}</span>
+        <span class="lbl">Rejected</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Bar (Tabs & Search) -->
+  <div class="controls-card">
+    <div class="tab-filters">
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'ALL'" (click)="setTab('ALL')">All Vehicles ({{ totalVehicles }})</button>
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'PENDING'" (click)="setTab('PENDING')">
+        Pending Queue ({{ pendingCount }})
+      </button>
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'APPROVED'" (click)="setTab('APPROVED')">Approved ({{ approvedCount }})</button>
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'REJECTED'" (click)="setTab('REJECTED')">Rejected ({{ rejectedCount }})</button>
+    </div>
+
+    <div class="search-field">
+      <span class="search-icon">🔍</span>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Search by Reg #, Driver Name, Machine Class, Chassis VIN..." />
+    </div>
+  </div>
+
+  <!-- Vehicles Table -->
+  <div class="table-card">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Vehicle Reg #</th>
+            <th>Driver / Partner</th>
+            <th>Model & Sub-Category</th>
+            <th>Machine Class <span class="req-tag">Req</span></th>
+            <th>Chassis / VIN <span class="req-tag">Req</span></th>
+            <th>Mfg Year</th>
+            <th>Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let vehicle of filteredVehicles()" (click)="openVehicleDetails(vehicle)" class="clickable-row">
+            <td>
+              <div class="reg-box">
+                <span class="reg-number">{{ vehicle.regNumber || 'Pending Reg' }}</span>
+                <span class="vahan-badge" *ngIf="vehicle.isVahanSynced" title="Auto-fetched from VAHAN portal">✓ VAHAN</span>
+              </div>
+            </td>
+            <td>
+              <div class="driver-cell">
+                <span class="driver-name">{{ vehicle.driverName || 'Driver Partner' }}</span>
+                <span class="driver-phone" *ngIf="vehicle.driverPhone">📞 {{ vehicle.driverPhone }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="model-cell">
+                <span class="model-name">{{ vehicle.machineryModel }}</span>
+                <span class="sub-cat">{{ vehicle.machinerySubCategory }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="highlight-spec" *ngIf="vehicle.machineClass">{{ vehicle.machineClass }}</span>
+              <span class="empty-field" *ngIf="!vehicle.machineClass">Not Specified</span>
+            </td>
+            <td>
+              <span class="code-font" *ngIf="vehicle.chassisVin">{{ vehicle.chassisVin }}</span>
+              <span class="empty-field" *ngIf="!vehicle.chassisVin">Not Specified</span>
+            </td>
+            <td>
+              <span>{{ vehicle.mfgYear || 'N/A' }}</span>
+            </td>
+            <td>
+              <span class="status-pill" [class.pending]="isPending(vehicle.status)"
+                                      [class.approved]="isApproved(vehicle.status)"
+                                      [class.rejected]="isRejected(vehicle.status)">
+                {{ vehicle.status }}
+              </span>
+            </td>
+            <td class="text-right" (click)="$event.stopPropagation()">
+              <div class="action-btn-group">
+                <button type="button" class="btn-icon view-btn" (click)="openVehicleDetails(vehicle)" title="View Specs & Verification Details">
+                  👁️ Inspect
+                </button>
+                <button type="button" class="btn-icon approve-btn" *ngIf="!isApproved(vehicle.status)" (click)="approveVehicle(vehicle, $event)" title="Approve Vehicle">
+                  ✓ Approve
+                </button>
+                <button type="button" class="btn-icon reject-btn" *ngIf="!isRejected(vehicle.status)" (click)="openRejectModal(vehicle, $event)" title="Reject Vehicle">
+                  ✕ Reject
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredVehicles().length === 0">
+            <td colspan="8" class="empty-state">
+              <div class="empty-box">
+                <span>🚜</span>
+                <h3>No Vehicles Found</h3>
+                <p>No machinery registrations match your selected status filter or search query.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Vehicle Details & Verification Inspection Modal -->
+  <div class="modal-backdrop animate-fade-in" *ngIf="showModal && selectedVehicle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="header-title">
+          <h2>Vehicle Verification Inspection</h2>
+          <span class="sub">{{ selectedVehicle.regNumber }} — {{ selectedVehicle.vehicleName }}</span>
+        </div>
+        <button type="button" class="close-btn" (click)="closeModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Vehicle Status Banner -->
+        <div class="status-banner" [class.banner-pending]="isPending(selectedVehicle.status)"
+                                   [class.banner-approved]="isApproved(selectedVehicle.status)"
+                                   [class.banner-rejected]="isRejected(selectedVehicle.status)">
+          <div class="banner-info">
+            <span class="status-title">Status: {{ selectedVehicle.status }}</span>
+            <span class="submitted-date">Submitted on: {{ selectedVehicle.submittedOn || 'Recent' }}</span>
+          </div>
+          <div class="banner-actions">
+            <button type="button" class="btn-approve" *ngIf="!isApproved(selectedVehicle.status)" (click)="approveVehicle(selectedVehicle)">Approve Vehicle</button>
+            <button type="button" class="btn-reject" *ngIf="!isRejected(selectedVehicle.status)" (click)="openRejectModal(selectedVehicle)">Reject Vehicle</button>
+          </div>
+        </div>
+
+        <!-- Rejection Reason Note if Rejected -->
+        <div class="rejection-reason-box" *ngIf="isRejected(selectedVehicle.status) && selectedVehicle.rejectionReason">
+          <h4>❌ Rejection Reason</h4>
+          <p>{{ selectedVehicle.rejectionReason }}</p>
+        </div>
+
+        <!-- Required Fields Verification Section -->
+        <div class="section-card highlight-section">
+          <h3>📌 Key Verification Requirements</h3>
+          <div class="grid-2">
+            <div class="spec-item required-item">
+              <label>MACHINE CLASS <span class="req-star">*Required</span></label>
+              <div class="spec-value highlight">{{ selectedVehicle.machineClass || 'Not Provided' }}</div>
+            </div>
+            <div class="spec-item required-item">
+              <label>CHASSIS / VIN NUMBER <span class="req-star">*Required</span></label>
+              <div class="spec-value highlight code">{{ selectedVehicle.chassisVin || 'Not Provided' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Machinery Specs Grid -->
+        <div class="section-card">
+          <h3>🚜 Machinery Specifications & Info</h3>
+          <div class="grid-3">
+            <div class="spec-item">
+              <label>Registration Number</label>
+              <div class="spec-value">{{ selectedVehicle.regNumber }}</div>
+            </div>
+            <div class="spec-item">
+              <label>Model & Category</label>
+              <div class="spec-value">{{ selectedVehicle.machineryModel }} ({{ selectedVehicle.machinerySubCategory }})</div>
+            </div>
+            <div class="spec-item">
+              <label>Manufacturing Year</label>
+              <div class="spec-value">{{ selectedVehicle.mfgYear || 'N/A' }}</div>
+            </div>
+            <div class="spec-item">
+              <label>Engine Serial Number</label>
+              <div class="spec-value code">{{ selectedVehicle.engineSerial || 'N/A' }}</div>
+            </div>
+            <div class="spec-item">
+              <label>Powertrain / Fuel</label>
+              <div class="spec-value">{{ selectedVehicle.powertrain || 'DIESEL' }}</div>
+            </div>
+            <div class="spec-item">
+              <label>Operator Experience</label>
+              <div class="spec-value">{{ selectedVehicle.experience }}</div>
+            </div>
+          </div>
+          <div class="desc-box" *ngIf="selectedVehicle.vehicleDescription">
+            <label>Equipment Description</label>
+            <p>{{ selectedVehicle.vehicleDescription }}</p>
+          </div>
+        </div>
+
+        <!-- Driver / Owner Contact Info -->
+        <div class="section-card">
+          <h3>👤 Partner / Owner Profile</h3>
+          <div class="grid-2">
+            <div class="spec-item">
+              <label>Driver / Owner Name</label>
+              <div class="spec-value">{{ selectedVehicle.driverName || 'Driver Partner' }}</div>
+            </div>
+            <div class="spec-item">
+              <label>Phone Number</label>
+              <div class="spec-value">📞 {{ selectedVehicle.driverPhone || 'N/A' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents & Photos Upload Section -->
+        <div class="section-card">
+          <h3>📄 Uploaded Documents & Inspection Photos</h3>
+          <div class="doc-grid">
+            <div class="doc-tile" [class.no-doc]="!selectedVehicle.documents?.rcFront?.url" (click)="selectedVehicle.documents?.rcFront?.url && previewDoc('Vehicle RC (Front)', selectedVehicle.documents?.rcFront?.url)">
+              <span class="icon">📜</span>
+              <div class="doc-meta">
+                <span class="title">Vehicle RC (Front)</span>
+                <span class="badge" [class.badge-missing]="!selectedVehicle.documents?.rcFront?.url">
+                  {{ selectedVehicle.documents?.rcFront?.url ? (selectedVehicle.documents?.rcFront?.status || 'VERIFIED') : 'NOT UPLOADED' }}
+                </span>
+              </div>
+              <a *ngIf="selectedVehicle.documents?.rcFront?.url" [href]="selectedVehicle.documents?.rcFront?.url" target="_blank" download (click)="$event.stopPropagation()" class="doc-dl-btn" title="Download Document">📥 Download</a>
+              <span *ngIf="!selectedVehicle.documents?.rcFront?.url" class="no-doc-lbl">No File</span>
+            </div>
+
+            <div class="doc-tile" [class.no-doc]="!selectedVehicle.documents?.rcBack?.url" (click)="selectedVehicle.documents?.rcBack?.url && previewDoc('Vehicle RC (Back)', selectedVehicle.documents?.rcBack?.url)">
+              <span class="icon">📜</span>
+              <div class="doc-meta">
+                <span class="title">Vehicle RC (Back)</span>
+                <span class="badge" [class.badge-missing]="!selectedVehicle.documents?.rcBack?.url">
+                  {{ selectedVehicle.documents?.rcBack?.url ? (selectedVehicle.documents?.rcBack?.status || 'VERIFIED') : 'NOT UPLOADED' }}
+                </span>
+              </div>
+              <a *ngIf="selectedVehicle.documents?.rcBack?.url" [href]="selectedVehicle.documents?.rcBack?.url" target="_blank" download (click)="$event.stopPropagation()" class="doc-dl-btn" title="Download Document">📥 Download</a>
+              <span *ngIf="!selectedVehicle.documents?.rcBack?.url" class="no-doc-lbl">No File</span>
+            </div>
+
+            <div class="doc-tile" [class.no-doc]="!selectedVehicle.documents?.insurance?.url" (click)="selectedVehicle.documents?.insurance?.url && previewDoc('Insurance Policy', selectedVehicle.documents?.insurance?.url)">
+              <span class="icon">🛡️</span>
+              <div class="doc-meta">
+                <span class="title">Insurance Policy</span>
+                <span class="badge" [class.badge-missing]="!selectedVehicle.documents?.insurance?.url">
+                  {{ selectedVehicle.documents?.insurance?.url ? (selectedVehicle.documents?.insurance?.status || 'VERIFIED') : 'NOT UPLOADED' }}
+                </span>
+              </div>
+              <a *ngIf="selectedVehicle.documents?.insurance?.url" [href]="selectedVehicle.documents?.insurance?.url" target="_blank" download (click)="$event.stopPropagation()" class="doc-dl-btn" title="Download Document">📥 Download</a>
+              <span *ngIf="!selectedVehicle.documents?.insurance?.url" class="no-doc-lbl">No File</span>
+            </div>
+          </div>
+
+          <!-- Machinery Photos Gallery -->
+          <div class="photo-gallery" *ngIf="selectedVehicle.documents?.photos">
+            <h4>Machinery Photos</h4>
+            <div class="photo-grid">
+              <div class="photo-card" *ngIf="selectedVehicle.documents?.photos?.front" (click)="previewDoc('Machinery Front Photo', selectedVehicle.documents?.photos?.front)">
+                <img [src]="selectedVehicle.documents?.photos?.front" alt="Front View" />
+                <span class="lbl">Front View</span>
+              </div>
+              <div class="photo-card no-photo" *ngIf="!selectedVehicle.documents?.photos?.front">
+                <div class="no-photo-placeholder">📷 No Front View</div>
+              </div>
+
+              <div class="photo-card" *ngIf="selectedVehicle.documents?.photos?.side" (click)="previewDoc('Machinery Side Photo', selectedVehicle.documents?.photos?.side)">
+                <img [src]="selectedVehicle.documents?.photos?.side" alt="Side View" />
+                <span class="lbl">Side View</span>
+              </div>
+              <div class="photo-card no-photo" *ngIf="!selectedVehicle.documents?.photos?.side">
+                <div class="no-photo-placeholder">📷 No Side View</div>
+              </div>
+
+              <div class="photo-card" *ngIf="selectedVehicle.documents?.photos?.rear" (click)="previewDoc('Machinery Rear Photo', selectedVehicle.documents?.photos?.rear)">
+                <img [src]="selectedVehicle.documents?.photos?.rear" alt="Rear View" />
+                <span class="lbl">Rear View</span>
+              </div>
+              <div class="photo-card no-photo" *ngIf="!selectedVehicle.documents?.photos?.rear">
+                <div class="no-photo-placeholder">📷 No Rear View</div>
+              </div>
+
+              <div class="photo-card" *ngIf="selectedVehicle.documents?.photos?.cabin" (click)="previewDoc('Machinery Cabin Photo', selectedVehicle.documents?.photos?.cabin)">
+                <img [src]="selectedVehicle.documents?.photos?.cabin" alt="Cabin View" />
+                <span class="lbl">Cabin & Controls</span>
+              </div>
+              <div class="photo-card no-photo" *ngIf="!selectedVehicle.documents?.photos?.cabin">
+                <div class="no-photo-placeholder">📷 No Cabin View</div>
+              </div>
+
+              <div class="photo-card" *ngIf="selectedVehicle.documents?.photos?.engineSerialPlate" (click)="previewDoc('Engine Serial Plate Photo', selectedVehicle.documents?.photos?.engineSerialPlate)">
+                <img [src]="selectedVehicle.documents?.photos?.engineSerialPlate" alt="Engine Serial Plate" />
+                <span class="lbl">Engine Serial Plate</span>
+              </div>
+              <div class="photo-card no-photo" *ngIf="!selectedVehicle.documents?.photos?.engineSerialPlate">
+                <div class="no-photo-placeholder">📷 No Engine Plate</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rejection Reason Dialog Modal -->
+  <div class="modal-backdrop animate-fade-in" *ngIf="showRejectModal && rejectingVehicle">
+    <div class="reject-modal-card">
+      <div class="modal-header">
+        <h3>Reject Vehicle Verification</h3>
+        <button type="button" class="close-btn" (click)="closeRejectModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="reject-subtitle">
+          Please provide a rejection reason for vehicle <strong>{{ rejectingVehicle.regNumber }}</strong> ({{ rejectingVehicle.machineryModel }}). The driver will receive this reason in their application notifications.
+        </p>
+        <div class="form-group">
+          <label>Reason for Rejection <span class="req">*Required</span></label>
+          <textarea [(ngModel)]="rejectionReasonInput" rows="4" placeholder="e.g. RC Document is blurry / Machine Class does not match RC / Chassis VIN number is invalid..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeRejectModal()">Cancel</button>
+        <button type="button" class="btn-reject-submit" (click)="confirmRejection()">Submit Rejection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Preview Sub-Modal with View & Download Actions -->
+  <div class="doc-modal-backdrop" *ngIf="activeDocPreview" (click)="closeDocPreview()">
+    <div class="doc-modal-card" (click)="$event.stopPropagation()">
+      <div class="doc-modal-header">
+        <h4>📄 {{ activeDocPreview.title }}</h4>
+        <div class="doc-modal-actions">
+          <a [href]="activeDocPreview.url" target="_blank" download class="btn-doc-download">
+            📥 Download / View Full
+          </a>
+          <button type="button" class="btn-close-modal" (click)="closeDocPreview()">✕</button>
+        </div>
+      </div>
+      <div class="doc-modal-body">
+        <img [src]="activeDocPreview.url" *ngIf="activeDocPreview.isImage" class="preview-img" alt="Document Preview" />
+        <div class="no-img-preview" *ngIf="!activeDocPreview.isImage">
+          <span>📄</span>
+          <p>Document file uploaded. Click below to view or download.</p>
+          <a [href]="activeDocPreview.url" target="_blank" download class="btn-open-link">Open / Download Document</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
