@@ -34,6 +34,7 @@ export const routes: Routes = [
       { path: 'customers', loadComponent: () => import('./components/customers/customer-list/customer-list.component').then(m => m.CustomerListComponent) },
       { path: 'customers/:id', loadComponent: () => import('./components/customers/customer-profile/customer-profile.component').then(m => m.CustomerProfileComponent) },
       { path: 'owners', component: SubpageComponent },
+      { path: 'vehicles/masters', loadComponent: () => import('./components/vehicles/vehicle-master-list/vehicle-master-list.component').then(m => m.VehicleMasterListComponent) },
       { path: 'vehicles', loadComponent: () => import('./components/vehicles/vehicle-list/vehicle-list.component').then(m => m.VehicleListComponent) },
       { path: 'operations', component: SubpageComponent },
       { path: 'support', loadComponent: () => import('./components/support/support-list/support-list.component').then(m => m.SupportListComponent) },
