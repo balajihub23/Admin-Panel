@@ -1,0 +1,391 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h2>Vehicle Masters</h2>
+      <p class="subtitle">Manage dynamic vehicle categories, equipment models, and sub-models for driver registrations & customer bookings.</p>
+    </div>
+    <div>
+      <button *ngIf="activeTab === 'TYPES'" class="btn-primary" (click)="openAddTypeModal()">
+        + Add Vehicle Type
+      </button>
+      <button *ngIf="activeTab === 'MODELS'" class="btn-primary" (click)="openAddModelModal()">
+        + Add Vehicle Model
+      </button>
+      <button *ngIf="activeTab === 'SUB_MODELS'" class="btn-primary" (click)="openAddSubModelModal()">
+        + Add Sub Model / Equipment
+      </button>
+    </div>
+  </div>
+
+  <!-- Controls Bar / Tabs -->
+  <div class="controls-card">
+    <div class="tab-filters">
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'TYPES'" (click)="setTab('TYPES')">
+        Vehicle Types ({{ vehicleTypes.length }})
+      </button>
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'MODELS'" (click)="setTab('MODELS')">
+        Vehicle Models ({{ vehicleModels.length }})
+      </button>
+      <button type="button" class="tab-btn" [class.active]="activeTab === 'SUB_MODELS'" (click)="setTab('SUB_MODELS')">
+        Sub Models / Equipment ({{ vehicleSubModels.length }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <span class="spinner"></span>
+    <p>Loading master records...</p>
+  </div>
+
+  <!-- TAB 1: VEHICLE TYPES TABLE -->
+  <div *ngIf="!isLoading && activeTab === 'TYPES'" class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Icon</th>
+          <th>Name</th>
+          <th>Code</th>
+          <th>Description</th>
+          <th>Order</th>
+          <th>Status</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let type of vehicleTypes">
+          <td>
+            <div class="icon-avatar">
+              <img *ngIf="type.iconUrl" [src]="type.iconUrl" (error)="onImgError($event)" class="thumb-img" alt="icon" />
+              <span class="emoji-icon">
+                {{ type.code === 'CAR' || type.name === 'Car' ? '🚗' : (type.code === 'AUTO' || type.name === 'Auto' ? '🛺' : (type.code === 'BIKE' || type.name === 'Bike' ? '🏍️' : '🚜')) }}
+              </span>
+            </div>
+          </td>
+          <td><strong>{{ type.name }}</strong></td>
+          <td><code>{{ type.code }}</code></td>
+          <td class="text-muted">{{ type.description || '-' }}</td>
+          <td>{{ type.displayOrder }}</td>
+          <td>
+            <span class="status-pill" [class.active]="type.active" [class.inactive]="!type.active">
+              {{ type.active ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <button class="btn-sm btn-outline" (click)="openEditTypeModal(type)">Edit</button>
+            <button class="btn-sm btn-warning" (click)="toggleTypeStatus(type)">{{ type.active ? 'Deactivate' : 'Activate' }}</button>
+            <button class="btn-sm btn-danger" (click)="deleteType(type)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="vehicleTypes.length === 0">
+          <td colspan="7" class="empty-state">No Vehicle Types configured yet.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TAB 2: VEHICLE MODELS TABLE -->
+  <div *ngIf="!isLoading && activeTab === 'MODELS'" class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Icon</th>
+          <th>Vehicle Type</th>
+          <th>Model Name</th>
+          <th>Code</th>
+          <th>Description</th>
+          <th>Order</th>
+          <th>Status</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let model of vehicleModels">
+          <td>
+            <div class="icon-avatar">
+              <img *ngIf="model.iconUrl" [src]="model.iconUrl" (error)="onImgError($event)" class="thumb-img" alt="icon" />
+              <span class="emoji-icon">📦</span>
+            </div>
+          </td>
+          <td><span class="badge badge-type">{{ model.vehicleTypeName || 'Category' }}</span></td>
+          <td><strong>{{ model.name }}</strong></td>
+          <td><code>{{ model.code || '-' }}</code></td>
+          <td class="text-muted">{{ model.description || '-' }}</td>
+          <td>{{ model.displayOrder }}</td>
+          <td>
+            <span class="status-pill" [class.active]="model.active" [class.inactive]="!model.active">
+              {{ model.active ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <button class="btn-sm btn-outline" (click)="openEditModelModal(model)">Edit</button>
+            <button class="btn-sm btn-warning" (click)="toggleModelStatus(model)">{{ model.active ? 'Deactivate' : 'Activate' }}</button>
+            <button class="btn-sm btn-danger" (click)="deleteModel(model)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="vehicleModels.length === 0">
+          <td colspan="8" class="empty-state">No Vehicle Models configured yet.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TAB 3: SUB MODELS TABLE -->
+  <div *ngIf="!isLoading && activeTab === 'SUB_MODELS'" class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Icon</th>
+          <th>Vehicle Type</th>
+          <th>Model</th>
+          <th>Sub Model / Equipment</th>
+          <th>Machine Class</th>
+          <th>Horse Power</th>
+          <th>Capacity</th>
+          <th>Status</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let subModel of vehicleSubModels">
+          <td>
+            <div class="icon-avatar">
+              <img *ngIf="subModel.iconUrl" [src]="subModel.iconUrl" (error)="onImgError($event)" class="thumb-img" alt="equipment" />
+              <span class="emoji-icon">🚜</span>
+            </div>
+          </td>
+          <td><span class="badge badge-type">{{ subModel.vehicleTypeName || '-' }}</span></td>
+          <td><span class="badge badge-model">{{ subModel.vehicleModelName || '-' }}</span></td>
+          <td><strong>{{ subModel.name }}</strong></td>
+          <td class="text-muted">{{ subModel.machineClass || '-' }}</td>
+          <td>{{ subModel.horsePower || '-' }}</td>
+          <td>{{ subModel.capacity || '-' }}</td>
+          <td>
+            <span class="status-pill" [class.active]="subModel.active" [class.inactive]="!subModel.active">
+              {{ subModel.active ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <button class="btn-sm btn-outline" (click)="openEditSubModelModal(subModel)">Edit</button>
+            <button class="btn-sm btn-warning" (click)="toggleSubModelStatus(subModel)">{{ subModel.active ? 'Deactivate' : 'Activate' }}</button>
+            <button class="btn-sm btn-danger" (click)="deleteSubModel(subModel)">Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="vehicleSubModels.length === 0">
+          <td colspan="9" class="empty-state">No Sub Models configured yet.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MODAL FOR ADD/EDIT -->
+  <div *ngIf="showModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>
+          <span *ngIf="!isEditMode">Add New</span>
+          <span *ngIf="isEditMode">Edit</span>
+          <span *ngIf="modalType === 'TYPE'"> Vehicle Type</span>
+          <span *ngIf="modalType === 'MODEL'"> Vehicle Model</span>
+          <span *ngIf="modalType === 'SUB_MODEL'"> Sub Model / Equipment</span>
+        </h3>
+        <button type="button" class="close-btn" (click)="closeModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- FORM TYPE -->
+        <div *ngIf="modalType === 'TYPE'">
+          <div class="form-group">
+            <label>Name *</label>
+            <input type="text" class="form-control" [(ngModel)]="typeForm.name" placeholder="e.g. Machinery, Car, Auto" />
+          </div>
+          <div class="form-group">
+            <label>Code *</label>
+            <input type="text" class="form-control" [(ngModel)]="typeForm.code" placeholder="e.g. MACHINERY, CAR" />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" class="form-control" [(ngModel)]="typeForm.description" placeholder="e.g. Drive passengers" />
+          </div>
+          <div class="form-group">
+            <label>Upload Vehicle Icon / Image</label>
+            <div class="file-upload-box">
+              <input type="file" #typeFileInput (change)="onIconFileSelected($event, 'TYPE')" accept="image/*" class="file-input-hidden" />
+              <button type="button" class="btn-choose-file" (click)="typeFileInput.click()">
+                <span class="upload-icon">📁</span> Choose File
+              </button>
+              <span class="file-name-text">{{ getFileName(typeForm.iconUrl) || 'No file chosen' }}</span>
+            </div>
+
+            <!-- Image Preview Box -->
+            <div *ngIf="typeForm.iconUrl" class="preview-card">
+              <div class="preview-img-box">
+                <img [src]="typeForm.iconUrl" (error)="onImgError($event)" alt="Vehicle Preview" />
+              </div>
+              <div class="preview-details">
+                <span class="preview-title">{{ getFileName(typeForm.iconUrl) || 'Icon Preview' }}</span>
+                <span class="preview-badge">Uploaded Image</span>
+              </div>
+              <button type="button" class="btn-remove-img" (click)="removeTypeIcon()" title="Remove Image">Remove Image</button>
+            </div>
+            <span class="field-hint">Upload photo/icon image for this vehicle type.</span>
+          </div>
+          <div class="form-group">
+            <label>Display Order</label>
+            <input type="number" class="form-control" [(ngModel)]="typeForm.displayOrder" />
+          </div>
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" [(ngModel)]="typeForm.active" /> Active Category</label>
+          </div>
+        </div>
+
+        <!-- FORM MODEL -->
+        <div *ngIf="modalType === 'MODEL'">
+          <div class="form-group">
+            <label>Vehicle Type *</label>
+            <select class="form-control" [(ngModel)]="modelForm.vehicleTypeId">
+              <option *ngFor="let t of vehicleTypes" [value]="t.id">{{ t.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Model Name *</label>
+            <input type="text" class="form-control" [(ngModel)]="modelForm.name" placeholder="e.g. Backhoe, Excavator, Forklift" />
+          </div>
+          <div class="form-group">
+            <label>Code</label>
+            <input type="text" class="form-control" [(ngModel)]="modelForm.code" placeholder="e.g. BACKHOE" />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" class="form-control" [(ngModel)]="modelForm.description" placeholder="e.g. Backhoe Loader Equipment" />
+          </div>
+          <div class="form-group">
+            <label>Upload Model Icon / Image</label>
+            <div class="file-upload-box">
+              <input type="file" #modelFileInput (change)="onIconFileSelected($event, 'MODEL')" accept="image/*" class="file-input-hidden" />
+              <button type="button" class="btn-choose-file" (click)="modelFileInput.click()">
+                <span class="upload-icon">📁</span> Choose File
+              </button>
+              <span class="file-name-text">{{ getFileName(modelForm.iconUrl) || 'No file chosen' }}</span>
+            </div>
+
+            <!-- Image Preview Box -->
+            <div *ngIf="modelForm.iconUrl" class="preview-card">
+              <div class="preview-img-box">
+                <img [src]="modelForm.iconUrl" (error)="onImgError($event)" alt="Model Preview" />
+              </div>
+              <div class="preview-details">
+                <span class="preview-title">{{ getFileName(modelForm.iconUrl) || 'Model Icon Preview' }}</span>
+                <span class="preview-badge">Uploaded Image</span>
+              </div>
+              <button type="button" class="btn-remove-img" (click)="removeModelIcon()" title="Remove Image">Remove Image</button>
+            </div>
+            <span class="field-hint">Upload model photo/icon image (PNG / JPG).</span>
+          </div>
+          <div class="form-group">
+            <label>Display Order</label>
+            <input type="number" class="form-control" [(ngModel)]="modelForm.displayOrder" />
+          </div>
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" [(ngModel)]="modelForm.active" /> Active Model</label>
+          </div>
+        </div>
+
+        <!-- FORM SUB MODEL -->
+        <div *ngIf="modalType === 'SUB_MODEL'">
+          <div class="form-row" style="display: flex; gap: 12px;">
+            <div class="form-group" style="flex: 1;">
+              <label>Vehicle Type *</label>
+              <select class="form-control" [ngModel]="subModelForm.vehicleTypeId" (ngModelChange)="onSubModelTypeChange($event)">
+                <option *ngFor="let t of vehicleTypes" [value]="t.id">{{ t.name }}</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label>Model *</label>
+              <select class="form-control" [(ngModel)]="subModelForm.vehicleModelId">
+                <option *ngFor="let m of filteredModelsForSubModelForm" [value]="m.id">{{ m.name }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Sub Model Name *</label>
+            <input type="text" class="form-control" [(ngModel)]="subModelForm.name" placeholder="e.g. JCB 3DX, CAT 424B2" />
+          </div>
+          <div class="form-group">
+            <label>Upload Equipment Photo / Image</label>
+            <div class="file-upload-box">
+              <input type="file" #subModelFileInput (change)="onIconFileSelected($event, 'SUB_MODEL')" accept="image/*" class="file-input-hidden" />
+              <button type="button" class="btn-choose-file" (click)="subModelFileInput.click()">
+                <span class="upload-icon">📁</span> Choose File
+              </button>
+              <span class="file-name-text">{{ getFileName(subModelForm.iconUrl) || 'No file chosen' }}</span>
+            </div>
+
+            <!-- Image Preview Box -->
+            <div *ngIf="subModelForm.iconUrl" class="preview-card">
+              <div class="preview-img-box">
+                <img [src]="subModelForm.iconUrl" (error)="onImgError($event)" alt="Equipment Preview" />
+              </div>
+              <div class="preview-details">
+                <span class="preview-title">{{ getFileName(subModelForm.iconUrl) || 'Equipment Photo Preview' }}</span>
+                <span class="preview-badge">Uploaded Image</span>
+              </div>
+              <button type="button" class="btn-remove-img" (click)="removeSubModelIcon()" title="Remove Image">Remove Image</button>
+            </div>
+            <span class="field-hint">Upload equipment photo (PNG / JPG).</span>
+          </div>
+          <div class="form-row" style="display: flex; gap: 12px;">
+            <div class="form-group" style="flex: 1;">
+              <label>Manufacturer</label>
+              <input type="text" class="form-control" [(ngModel)]="subModelForm.manufacturer" placeholder="e.g. JCB, Caterpillar" />
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label>Machine Class</label>
+              <input type="text" class="form-control" [(ngModel)]="subModelForm.machineClass" placeholder="e.g. Backhoe Loader" />
+            </div>
+          </div>
+          <div class="form-row" style="display: flex; gap: 12px;">
+            <div class="form-group" style="flex: 1;">
+              <label>Horse Power</label>
+              <input type="text" class="form-control" [(ngModel)]="subModelForm.horsePower" placeholder="e.g. 74 HP" />
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label>Capacity</label>
+              <input type="text" class="form-control" [(ngModel)]="subModelForm.capacity" placeholder="e.g. 1.0 m³" />
+            </div>
+          </div>
+          <div class="form-row" style="display: flex; gap: 12px;">
+            <div class="form-group" style="flex: 1;">
+              <label>Fuel Type</label>
+              <input type="text" class="form-control" [(ngModel)]="subModelForm.fuelType" placeholder="DIESEL, PETROL, ELECTRIC" />
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label>Display Order</label>
+              <input type="number" class="form-control" [(ngModel)]="subModelForm.displayOrder" />
+            </div>
+          </div>
+          <div class="form-group checkbox-group">
+            <label><input type="checkbox" [(ngModel)]="subModelForm.active" /> Active Sub Model</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" [disabled]="isSaving" (click)="closeModal()">Cancel</button>
+        <button *ngIf="modalType === 'TYPE'" class="btn-primary" [disabled]="isSaving" (click)="saveType()">
+          <span *ngIf="isSaving" class="spinner-sm"></span>
+          {{ isSaving ? 'Processing...' : 'Save Type' }}
+        </button>
+        <button *ngIf="modalType === 'MODEL'" class="btn-primary" [disabled]="isSaving" (click)="saveModel()">
+          <span *ngIf="isSaving" class="spinner-sm"></span>
+          {{ isSaving ? 'Processing...' : 'Save Model' }}
+        </button>
+        <button *ngIf="modalType === 'SUB_MODEL'" class="btn-primary" [disabled]="isSaving" (click)="saveSubModel()">
+          <span *ngIf="isSaving" class="spinner-sm"></span>
+          {{ isSaving ? 'Processing...' : 'Save Sub Model' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

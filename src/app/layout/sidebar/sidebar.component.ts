@@ -79,16 +79,29 @@ export class SidebarComponent implements OnInit {
       this.sidebarItems = menusList.map((menu: any) => this.mapMenuToSidebarItem(menu));
     }
 
-    const hasVehicles = this.sidebarItems.some(item => 
+    let vehItem = this.sidebarItems.find(item => 
       item.route === '/vehicles' || (item.code && item.code.toLowerCase().includes('veh'))
     );
-    if (!hasVehicles) {
-      this.sidebarItems.splice(2, 0, {
+    if (!vehItem) {
+      vehItem = {
         name: 'Vehicles',
         code: 'VEHICLES',
         icon: 'vehicles',
         route: '/vehicles'
-      });
+      };
+      this.sidebarItems.splice(2, 0, vehItem);
+    }
+
+    // Always structure Vehicles with 2 submenus:
+    // 1. Vehicles (/vehicles) -> Register/Approve Vehicles List
+    // 2. Vehicle Master (/vehicles/masters) -> Master Categories, Types, Models, Submodels
+    vehItem.subMenus = [
+      { name: 'Vehicles', code: 'VEHICLES_LIST', icon: 'vehicles', route: '/vehicles' },
+      { name: 'Vehicle Master', code: 'VEHICLES_MASTERS', icon: 'settings', route: '/vehicles/masters' }
+    ];
+
+    if (typeof window !== 'undefined' && window.location.pathname.includes('/vehicles')) {
+      this.expandedItems.add(vehItem.code);
     }
   }
 

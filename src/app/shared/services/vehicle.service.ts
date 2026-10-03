@@ -170,8 +170,26 @@ export class VehicleService {
 
   private saveLocal(list: AdminVehicle[]): void {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('rentron_shared_vehicles', JSON.stringify(list));
-      localStorage.setItem('admin_vehicles_list', JSON.stringify(list));
+      try {
+        const sanitized = list.map(v => {
+          const clone = JSON.parse(JSON.stringify(v));
+          if (clone.documents) {
+            if (clone.documents.rcFront?.url?.startsWith('data:')) clone.documents.rcFront.url = '';
+            if (clone.documents.rcBack?.url?.startsWith('data:')) clone.documents.rcBack.url = '';
+            if (clone.documents.insurance?.url?.startsWith('data:')) clone.documents.insurance.url = '';
+            if (clone.documents.photos) {
+              for (const key of Object.keys(clone.documents.photos)) {
+                if (clone.documents.photos[key]?.startsWith('data:')) clone.documents.photos[key] = '';
+              }
+            }
+          }
+          return clone;
+        });
+        localStorage.setItem('rentron_shared_vehicles', JSON.stringify(sanitized));
+        localStorage.setItem('admin_vehicles_list', JSON.stringify(sanitized));
+      } catch (e) {
+        console.warn('localStorage storage quota exceeded, skipping local cache for admin_vehicles_list:', e);
+      }
     }
   }
 }
