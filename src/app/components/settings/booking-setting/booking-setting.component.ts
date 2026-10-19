@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BookingSettingService, BookingSetting } from '../../../shared/services/booking-setting.service';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -7,7 +8,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 @Component({
   selector: 'app-booking-setting',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './booking-setting.component.html',
   styleUrls: ['./booking-setting.component.scss']
 })

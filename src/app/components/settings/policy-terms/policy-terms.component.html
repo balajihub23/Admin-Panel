@@ -1,0 +1,163 @@
+<div class="policies-container">
+  <div class="page-header">
+    <div>
+      <h2>Policy & Terms Management</h2>
+      <p class="subtitle">Dynamically configure Terms, Privacy, Refund, and Cancellation guidelines for Customer & Driver applications.</p>
+    </div>
+    <button class="btn-primary" (click)="openCreateModal()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Add New Policy
+    </button>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar card">
+    <div class="filter-group">
+      <label>Target Application:</label>
+      <div class="pill-group">
+        <button [class.active]="filterApp === 'ALL'" (click)="filterApp = 'ALL'; applyFilters()">All</button>
+        <button [class.active]="filterApp === 'CUSTOMER'" (click)="filterApp = 'CUSTOMER'; applyFilters()">Customer App</button>
+        <button [class.active]="filterApp === 'DRIVER'" (click)="filterApp = 'DRIVER'; applyFilters()">Driver App</button>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label>Policy Category:</label>
+      <select [(ngModel)]="filterType" (change)="applyFilters()" class="form-control select-type">
+        <option value="ALL">All Categories</option>
+        <option *ngFor="let t of policyTypes" [value]="t.value">{{ t.label }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Policies Table / Cards -->
+  <div class="table-card card" *ngIf="!isLoading">
+    <table class="data-table" *ngIf="filteredPolicies.length > 0; else emptyState">
+      <thead>
+        <tr>
+          <th>Target App</th>
+          <th>Type / Code</th>
+          <th>Title</th>
+          <th>Version</th>
+          <th>Status</th>
+          <th>Last Updated</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of filteredPolicies">
+          <td>
+            <span class="badge" [ngClass]="p.targetApp === 'CUSTOMER' ? 'badge-blue' : (p.targetApp === 'DRIVER' ? 'badge-amber' : 'badge-green')">
+              {{ p.targetApp }}
+            </span>
+          </td>
+          <td><code>{{ p.policyType }}</code></td>
+          <td class="policy-title-col">
+            <strong>{{ p.title }}</strong>
+            <div class="preview-text">{{ p.content | slice:0:100 }}...</div>
+          </td>
+          <td><span class="badge-version">v{{ p.version || '1.0' }}</span></td>
+          <td>
+            <button class="status-toggle" [class.active]="p.active" (click)="toggleActive(p)">
+              {{ p.active ? 'Active' : 'Inactive' }}
+            </button>
+          </td>
+          <td>{{ p.updatedAt ? (p.updatedAt | date:'mediumDate') : 'Recently' }}</td>
+          <td class="text-right actions-col">
+            <button class="btn-icon edit-btn" (click)="openEditModal(p)" title="Edit Policy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="btn-icon delete-btn" (click)="deletePolicy(p)" title="Delete Policy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <p>No policy terms found for the selected criteria.</p>
+        <button class="btn-secondary" (click)="openCreateModal()">Create Policy Now</button>
+      </div>
+    </ng-template>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-box">
+    <span class="spinner"></span> Loading policy terms...
+  </div>
+</div>
+
+<!-- Modal Dialog -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>{{ isEditing ? 'Edit Policy & Terms' : 'Add New Policy & Terms' }}</h3>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label>Target Application *</label>
+          <select [(ngModel)]="currentPolicy.targetApp" class="form-control">
+            <option value="CUSTOMER">Customer App</option>
+            <option value="DRIVER">Driver App</option>
+            <option value="BOTH">Both Applications</option>
+          </select>
+        </div>
+        <div class="form-group col-6">
+          <label>Policy Category *</label>
+          <select [(ngModel)]="currentPolicy.policyType" class="form-control">
+            <option *ngFor="let t of policyTypes" [value]="t.value">{{ t.label }} ({{ t.value }})</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-9">
+          <label>Policy Document Title *</label>
+          <input type="text" [(ngModel)]="currentPolicy.title" placeholder="e.g. Terms of Service, Cancellation & Refund Rules" class="form-control" />
+        </div>
+        <div class="form-group col-3">
+          <label>Version</label>
+          <input type="text" [(ngModel)]="currentPolicy.version" placeholder="1.0" class="form-control" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Document Content (Markdown or Text) *</label>
+        <textarea rows="10" [(ngModel)]="currentPolicy.content" placeholder="Enter terms, guidelines, inclusions, exclusions, and refund rules..." class="form-control font-mono"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="currentPolicy.active" />
+          <span>Set as Active (Immediately visible in mobile & web apps)</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+      <button class="btn-primary" (click)="savePolicy()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving...' : (isEditing ? 'Update Policy' : 'Publish Policy') }}
+      </button>
+    </div>
+  </div>
+</div>

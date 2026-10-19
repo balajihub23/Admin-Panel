@@ -4,6 +4,7 @@
       <h2>Booking & Payment Settings</h2>
       <p class="subtitle">Configure Razorpay payment gateway parameters and Progressive Auto-Assignment rules</p>
     </div>
+    <a routerLink="/settings/policies" class="btn-secondary" style="margin-right:12px;text-decoration:none;display:inline-flex;align-items:center;padding:10px 16px;border-radius:8px;font-weight:600;background:#F1F5F9;color:#1E293B;border:1px solid #CBD5E1;">📋 Policy & Terms Management</a>
     <button class="btn-primary" (click)="saveSettings()" [disabled]="isSaving">
       <span *ngIf="isSaving" class="spinner-sm"></span>
       {{ isSaving ? 'Saving...' : 'Save Settings' }}
@@ -95,4 +96,118 @@
       </div>
     </div>
   </div>
-</div>
+
+    <!-- Push Notification (FCM) Settings Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Push Notifications (Firebase FCM)</h3>
+        <span class="badge" [class.badge-success]="settings.pushEnabled" [class.badge-secondary]="!settings.pushEnabled">
+          {{ settings.pushEnabled ? 'Active' : 'Disabled' }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="settings.pushEnabled" />
+            <span>Enable Realtime Push Notifications</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>FCM Project ID</label>
+          <input type="text" [(ngModel)]="settings.fcmProjectId" placeholder="e.g. rentron-app" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label>FCM Server Key / Service Account Key</label>
+          <input type="password" [(ngModel)]="settings.fcmServerKey" placeholder="••••••••••••••••" class="form-control" />
+          <small class="field-hint">Used for dispatching background ride alerts to driver and customer devices.</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email Configuration (SMTP) Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Email Configuration (SMTP)</h3>
+        <span class="badge" [class.badge-success]="settings.smtpEnabled" [class.badge-secondary]="!settings.smtpEnabled">
+          {{ settings.smtpEnabled ? 'Active' : 'Disabled' }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="settings.smtpEnabled" />
+            <span>Enable System Email Notifications</span>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-8">
+            <label>SMTP Host</label>
+            <input type="text" [(ngModel)]="settings.smtpHost" placeholder="smtp.gmail.com or mail.rentron.com" class="form-control" />
+          </div>
+          <div class="form-group col-4">
+            <label>SMTP Port</label>
+            <input type="number" [(ngModel)]="settings.smtpPort" placeholder="587" class="form-control" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>SMTP Username / User</label>
+          <input type="text" [(ngModel)]="settings.smtpUsername" placeholder="notifications@rentron.com" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label>SMTP Password / App Password</label>
+          <input type="password" [(ngModel)]="settings.smtpPassword" placeholder="••••••••••••••••" class="form-control" />
+          <small class="field-hint">Masked as ****** once stored.</small>
+        </div>
+
+        <div class="form-group">
+          <label>From Email Address</label>
+          <input type="text" [(ngModel)]="settings.smtpFromEmail" placeholder="no-reply@rentron.com" class="form-control" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Fast2SMS Configuration Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Fast2SMS Configuration</h3>
+        <span class="badge" [class.badge-success]="settings.smsEnabled" [class.badge-secondary]="!settings.smsEnabled">
+          {{ settings.smsEnabled ? 'Active' : 'Disabled' }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="settings.smsEnabled" />
+            <span>Enable Fast2SMS OTP & Alerts</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>Fast2SMS API Key</label>
+          <input type="password" [(ngModel)]="settings.fast2smsApiKey" placeholder="••••••••••••••••" class="form-control" />
+          <small class="field-hint">Used for delivering high-priority transactional OTPs and booking updates.</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>Sender ID (DLT / Header)</label>
+            <input type="text" [(ngModel)]="settings.fast2smsSenderId" placeholder="e.g. RNTRON" class="form-control" />
+          </div>
+          <div class="form-group col-6">
+            <label>Route</label>
+            <select [(ngModel)]="settings.fast2smsRoute" class="form-control">
+              <option value="v3">v3 (Quick OTP)</option>
+              <option value="dlt">dlt (DLT Approved)</option>
+              <option value="otp">otp (Dedicated OTP)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+  </div>

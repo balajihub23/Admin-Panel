@@ -30,6 +30,7 @@ export const routes: Routes = [
       // { path: 'settings', loadComponent: () => import('./components/settings/role-permission-setup/role-permission-setup.component').then(m => m.RolePermissionSetupComponent) },
       { path: 'settings', loadComponent: () => import('./components/settings/booking-setting/booking-setting.component').then(m => m.BookingSettingComponent) },
       { path: 'settings/menus', loadComponent: () => import('./components/settings/menu-list/menu-list.component').then(m => m.MenuListComponent) },
+      { path: 'settings/policies', loadComponent: () => import('./components/settings/policy-terms/policy-terms.component').then(m => m.PolicyTermsComponent) },
       { path: 'settings/permissions', loadComponent: () => import('./components/settings/role-permission-setup/role-permission-setup.component').then(m => m.RolePermissionSetupComponent) },
       { path: 'customers', loadComponent: () => import('./components/customers/customer-list/customer-list.component').then(m => m.CustomerListComponent) },
       { path: 'customers/:id', loadComponent: () => import('./components/customers/customer-profile/customer-profile.component').then(m => m.CustomerProfileComponent) },

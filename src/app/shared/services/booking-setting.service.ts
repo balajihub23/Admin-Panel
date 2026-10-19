@@ -17,6 +17,20 @@ export interface BookingSetting {
   maxLocationAgeSeconds?: number;
   notifyAdminWhenUnassigned?: boolean;
   mapKey?: string;
+  supportPhone?: string;
+  fcmServerKey?: string;
+  fcmProjectId?: string;
+  pushEnabled?: boolean;
+  smtpHost?: string;
+  smtpPort?: number;
+  smtpUsername?: string;
+  smtpPassword?: string;
+  smtpFromEmail?: string;
+  smtpEnabled?: boolean;
+  fast2smsApiKey?: string;
+  fast2smsSenderId?: string;
+  fast2smsRoute?: string;
+  smsEnabled?: boolean;
 }
 
 export interface BookingAssignment {
