@@ -7,6 +7,22 @@
     </a>
   </div>
 
+  <!-- Pending Vehicle Verification Alert Banner -->
+  <div class="pending-vehicle-alert-banner animate-fade-in" *ngIf="hasPendingVehicle">
+    <div class="banner-left">
+      <div class="banner-i-badge">ℹ</div>
+      <div class="banner-info">
+        <h4>Vehicle Verification Pending Approval</h4>
+        <p>This driver is approved, but has submitted vehicle details (<strong>{{ pendingVehicles[0].vehicleName || pendingVehicles[0].category }}</strong> - <strong>{{ pendingVehicles[0].regNumber || 'Pending Reg' }}</strong>) awaiting your verification.</p>
+      </div>
+    </div>
+    <div class="banner-actions">
+      <button type="button" class="btn-review-banner" (click)="openPendingVehicleReview(pendingVehicles[0])">
+        Review & Approve Vehicle
+      </button>
+    </div>
+  </div>
+
   <div class="profile-layout">
     <!-- Left: Identity Card -->
     <div class="identity-card premium-card">
@@ -27,6 +43,12 @@
                   }">
               {{driver.status}}
             </span>
+
+            <!-- 'i' button for verification pending for approval -->
+            <button type="button" class="info-badge-pending-btn" *ngIf="hasPendingVehicle" (click)="openPendingVehicleReview(pendingVehicles[0])" title="Vehicle verification pending for approval for this driver">
+              <span class="info-icon-circle">ℹ</span>
+              <span>Verification pending for approval</span>
+            </button>
           </div>
         </div>
       </div>
@@ -94,7 +116,7 @@
       </div>
     </div>
 
-    <!-- Right: Stats & History -->
+    <!-- Right: Stats, Vehicles & History -->
     <div class="stats-history-layout">
       <!-- High Level Metrics Grid -->
       <div class="stats-grid">
@@ -123,6 +145,77 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Registered Vehicles Section -->
+      <div class="table-container premium-card vehicles-card-wrapper">
+        <div class="table-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <h3>Vehicles & Equipment ({{ driverVehicles.length }})</h3>
+            <span class="pending-pill-tag" *ngIf="hasPendingVehicle">
+              ℹ {{ pendingVehicles.length }} Verification Pending
+            </span>
+          </div>
+        </div>
+
+        <div class="driver-vehicles-list" *ngIf="driverVehicles.length > 0; else noVehiclesTpl">
+          <div class="driver-vehicle-item" *ngFor="let v of driverVehicles" [class.is-under-review]="isVehiclePending(v.status)">
+            <div class="v-main-info">
+              <div class="v-header-row">
+                <span class="v-cat-badge">{{ v.category }}</span>
+                <h4 class="v-model-name">{{ v.vehicleName || v.machineryModel }}</h4>
+                <span class="status-indicator" 
+                      [ngClass]="{
+                        'status-active': v.status === 'APPROVED' || v.status === 'ACTIVE',
+                        'status-busy': isVehiclePending(v.status),
+                        'status-suspended': v.status === 'REJECTED'
+                      }">
+                  {{ isVehiclePending(v.status) ? 'Under Review' : v.status }}
+                </span>
+              </div>
+              <div class="v-meta-grid">
+                <div><span class="v-meta-lbl">Reg No:</span> <strong>{{ v.regNumber || 'Not entered' }}</strong></div>
+                <div><span class="v-meta-lbl">Chassis:</span> <span class="font-mono">{{ v.chassisVin || '—' }}</span></div>
+                <div *ngIf="v.machineClass"><span class="v-meta-lbl">Class:</span> {{ v.machineClass }}</div>
+                <div *ngIf="v.mfgYear"><span class="v-meta-lbl">Year:</span> {{ v.mfgYear }}</div>
+              </div>
+              <!-- Document chips -->
+              <div class="v-doc-chips">
+                <button type="button" class="v-doc-chip" *ngIf="v.documents?.rcFront?.url" (click)="openDocumentPreview({ fileName: 'RC Front (' + v.regNumber + ')', url: v.documents?.rcFront?.url, fileType: 'image/png' })">
+                  📄 RC Front
+                </button>
+                <button type="button" class="v-doc-chip" *ngIf="v.documents?.rcBack?.url" (click)="openDocumentPreview({ fileName: 'RC Back (' + v.regNumber + ')', url: v.documents?.rcBack?.url, fileType: 'image/png' })">
+                  📄 RC Back
+                </button>
+                <button type="button" class="v-doc-chip" *ngIf="v.documents?.insurance?.url" (click)="openDocumentPreview({ fileName: 'Insurance (' + v.regNumber + ')', url: v.documents?.insurance?.url, fileType: 'application/pdf' })">
+                  📄 Insurance
+                </button>
+                <button type="button" class="v-doc-chip" *ngIf="v.documents?.photos?.front" (click)="openDocumentPreview({ fileName: 'Vehicle Photo (' + v.regNumber + ')', url: v.documents?.photos?.front, fileType: 'image/png' })">
+                  📷 Photos
+                </button>
+              </div>
+            </div>
+
+            <!-- Vehicle Action Buttons -->
+            <div class="v-actions-col">
+              <button type="button" class="btn-v-details" (click)="openPendingVehicleReview(v)">
+                ℹ View Details
+              </button>
+              <button type="button" class="btn-v-approve" *ngIf="isVehiclePending(v.status)" (click)="approveVehicleAction(v)">
+                ✓ Approve
+              </button>
+              <button type="button" class="btn-v-reject" *ngIf="isVehiclePending(v.status)" (click)="rejectVehicleAction(v)">
+                ✕ Reject
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noVehiclesTpl>
+          <div style="padding: 2rem; text-align: center; color: #94a3b8; font-size: 13px;">
+            No vehicles registered for this driver yet.
+          </div>
+        </ng-template>
       </div>
 
       <!-- Job History Table with Pagination -->
@@ -174,12 +267,127 @@
   </div>
 </div>
 
-<!-- Document Preview & Download Modal Popup -->
+<!-- Vehicle Review & Verification Modal Popup -->
+<div class="modal-overlay" *ngIf="showVehicleReviewModal && selectedVehicleForReview">
+  <div class="modal-card vehicle-modal">
+    <div class="modal-header">
+      <div>
+        <h3>{{ selectedVehicleForReview.vehicleName || selectedVehicleForReview.machineryModel }}</h3>
+        <p class="modal-subtitle">Vehicle Verification for Driver <strong>{{ driver?.fullName }}</strong> (DRV-{{ driver?.id }})</p>
+      </div>
+      <button class="close-btn" (click)="closeVehicleReviewModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Status Notice -->
+      <div class="vehicle-status-banner" [ngClass]="{'is-pending': isVehiclePending(selectedVehicleForReview.status), 'is-approved': selectedVehicleForReview.status === 'APPROVED' || selectedVehicleForReview.status === 'ACTIVE'}">
+        <span class="v-status-icon">ℹ</span>
+        <div>
+          <strong>Status: {{ isVehiclePending(selectedVehicleForReview.status) ? 'Pending Verification / Under Review' : selectedVehicleForReview.status }}</strong>
+          <p *ngIf="isVehiclePending(selectedVehicleForReview.status)" style="margin:2px 0 0 0; font-size:12px;">This vehicle was newly added/updated by the driver and requires administrative review.</p>
+        </div>
+      </div>
+
+      <!-- Vehicle Specs Grid -->
+      <div class="modal-details-grid">
+        <div class="m-grid-item">
+          <span class="lbl">Category</span>
+          <span class="val">{{ selectedVehicleForReview.category }}</span>
+        </div>
+        <div class="m-grid-item">
+          <span class="lbl">Registration Number</span>
+          <span class="val highlight">{{ selectedVehicleForReview.regNumber || 'Not specified' }}</span>
+        </div>
+        <div class="m-grid-item">
+          <span class="lbl">Chassis / VIN</span>
+          <span class="val font-mono">{{ selectedVehicleForReview.chassisVin || '—' }}</span>
+        </div>
+        <div class="m-grid-item">
+          <span class="lbl">Machine Class</span>
+          <span class="val">{{ selectedVehicleForReview.machineClass || '—' }}</span>
+        </div>
+        <div class="m-grid-item">
+          <span class="lbl">Engine Serial</span>
+          <span class="val font-mono">{{ selectedVehicleForReview.engineSerial || '—' }}</span>
+        </div>
+        <div class="m-grid-item">
+          <span class="lbl">Mfg. Year</span>
+          <span class="val">{{ selectedVehicleForReview.mfgYear || '—' }}</span>
+        </div>
+        <div class="m-grid-item">
+          <span class="lbl">Powertrain</span>
+          <span class="val">{{ selectedVehicleForReview.powertrain || 'DIESEL' }}</span>
+        </div>
+        <div class="m-grid-item">
+          <span class="lbl">Submitted On</span>
+          <span class="val">{{ selectedVehicleForReview.submittedOn || 'Recent' }}</span>
+        </div>
+      </div>
+
+      <!-- Uploaded Verification Documents & Photos -->
+      <h4 style="margin: 20px 0 10px; font-size: 14px; font-weight: 700; color: #1e293b;">Uploaded Verification Documents</h4>
+      <div class="modal-docs-grid">
+        <!-- RC Front -->
+        <div class="modal-doc-card" *ngIf="selectedVehicleForReview.documents?.rcFront?.url; else noRcFront">
+          <span class="m-doc-title">RC Front</span>
+          <img [src]="selectedVehicleForReview.documents?.rcFront?.url" alt="RC Front" class="m-doc-img" (click)="openDocumentPreview({ fileName: 'RC Front', url: selectedVehicleForReview.documents?.rcFront?.url, fileType: 'image/png' })" />
+        </div>
+        <ng-template #noRcFront>
+          <div class="modal-doc-card empty"><span class="m-doc-title">RC Front</span><span class="empty-txt">Not uploaded</span></div>
+        </ng-template>
+
+        <!-- RC Back -->
+        <div class="modal-doc-card" *ngIf="selectedVehicleForReview.documents?.rcBack?.url; else noRcBack">
+          <span class="m-doc-title">RC Back</span>
+          <img [src]="selectedVehicleForReview.documents?.rcBack?.url" alt="RC Back" class="m-doc-img" (click)="openDocumentPreview({ fileName: 'RC Back', url: selectedVehicleForReview.documents?.rcBack?.url, fileType: 'image/png' })" />
+        </div>
+        <ng-template #noRcBack>
+          <div class="modal-doc-card empty"><span class="m-doc-title">RC Back</span><span class="empty-txt">Not uploaded</span></div>
+        </ng-template>
+
+        <!-- Insurance -->
+        <div class="modal-doc-card" *ngIf="selectedVehicleForReview.documents?.insurance?.url; else noInsurance">
+          <span class="m-doc-title">Insurance</span>
+          <div class="m-doc-pdf" (click)="openDocumentPreview({ fileName: 'Insurance Policy', url: selectedVehicleForReview.documents?.insurance?.url, fileType: 'application/pdf' })">
+            📄 View Policy
+          </div>
+        </div>
+        <ng-template #noInsurance>
+          <div class="modal-doc-card empty"><span class="m-doc-title">Insurance</span><span class="empty-txt">Not uploaded</span></div>
+        </ng-template>
+
+        <!-- Machine / Vehicle Photo -->
+        <div class="modal-doc-card" *ngIf="selectedVehicleForReview.documents?.photos?.front; else noPhoto">
+          <span class="m-doc-title">Vehicle Photo</span>
+          <img [src]="selectedVehicleForReview.documents?.photos?.front" alt="Vehicle Photo" class="m-doc-img" (click)="openDocumentPreview({ fileName: 'Vehicle Photo', url: selectedVehicleForReview.documents?.photos?.front, fileType: 'image/png' })" />
+        </div>
+        <ng-template #noPhoto>
+          <div class="modal-doc-card empty"><span class="m-doc-title">Vehicle Photo</span><span class="empty-txt">Not uploaded</span></div>
+        </ng-template>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="padding: 16px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <button class="btn-secondary" (click)="closeVehicleReviewModal()" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer;">Close</button>
+      
+      <div style="display:flex; gap:10px;" *ngIf="isVehiclePending(selectedVehicleForReview.status)">
+        <button class="btn-danger-reject" (click)="rejectVehicleAction(selectedVehicleForReview)" style="padding: 8px 16px; border-radius: 6px; background: #ef4444; color: #fff; border: none; font-weight: 600; cursor: pointer;">
+          ✕ Reject Vehicle
+        </button>
+        <button class="btn-success-approve" (click)="approveVehicleAction(selectedVehicleForReview)" style="padding: 8px 20px; border-radius: 6px; background: #16a34a; color: #fff; border: none; font-weight: 600; cursor: pointer;">
+          ✓ Approve Vehicle
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Generic Document Preview Modal Popup -->
 <div class="modal-overlay" *ngIf="showDocumentPreviewModal && selectedDocumentForPreview">
   <div class="modal-card preview-modal">
     <div class="modal-header">
       <div>
-        <h3>{{ formatDocumentTypeName(selectedDocumentForPreview.documentType) }}</h3>
+        <h3>{{ formatDocumentTypeName(selectedDocumentForPreview.fileName || selectedDocumentForPreview.documentType) }}</h3>
         <p class="modal-subtitle">Submitted by <strong>{{ driver?.fullName }}</strong></p>
       </div>
       <button class="close-btn" (click)="closeDocumentPreview()">&times;</button>
