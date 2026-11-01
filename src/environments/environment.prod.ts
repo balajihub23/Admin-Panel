@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  serverApi: 'http://localhost:8080'
+  serverApi: 'https://rentron.in/rentron-gateway/rentron-svc-backend-1.0-SNAPSHOT'
 };
