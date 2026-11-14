@@ -27,9 +27,13 @@ export interface BookingSetting {
   smtpPassword?: string;
   smtpFromEmail?: string;
   smtpEnabled?: boolean;
+  fast2smsUrl?: string;
   fast2smsApiKey?: string;
   fast2smsSenderId?: string;
   fast2smsRoute?: string;
+  otpMessageTemplate?: string;
+  otpDigit?: number;
+  smsVendor?: string;
   smsEnabled?: boolean;
 }
 
@@ -65,5 +69,9 @@ export class BookingSettingService {
 
   getAssignmentAuditHistory(bookingId: number): Observable<{ success: boolean; data: BookingAssignment[] }> {
     return this.http.get<{ success: boolean; data: BookingAssignment[] }>(`${this.apiUrl}/assignments/${bookingId}`);
+  }
+
+  testSms(phone: string): Observable<{ success: boolean; message: string; data?: any }> {
+    return this.http.post<{ success: boolean; message: string; data?: any }>(`${this.apiUrl}/test-sms?phone=${encodeURIComponent(phone)}`, {});
   }
 }

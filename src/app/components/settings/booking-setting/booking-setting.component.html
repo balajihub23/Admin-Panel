@@ -173,30 +173,63 @@
       </div>
       <div class="card-body">
         <div class="form-group">
-          <label class="checkbox-label">
+          <label class="checkbox-label" style="font-size: 15px; font-weight: 600;">
             <input type="checkbox" [(ngModel)]="settings.smsEnabled" />
-            <span>Enable Fast2SMS OTP & Alerts</span>
+            <span>Enable SMS Verification & Login OTP</span>
           </label>
+          <small class="field-hint" style="margin-top: 4px; display: block;">When enabled, login OTPs for Customer Website & Driver App are sent through Fast2SMS.</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>SMS Vendor</label>
+            <input type="text" [(ngModel)]="settings.smsVendor" placeholder="FAST-SMS" class="form-control" />
+          </div>
+          <div class="form-group col-6">
+            <label>SMS Gateway URI</label>
+            <input type="text" [(ngModel)]="settings.fast2smsUrl" placeholder="https://www.fast2sms.com/dev/bulkV2" class="form-control" />
+          </div>
         </div>
 
         <div class="form-group">
           <label>Fast2SMS API Key</label>
           <input type="password" [(ngModel)]="settings.fast2smsApiKey" placeholder="••••••••••••••••" class="form-control" />
-          <small class="field-hint">Used for delivering high-priority transactional OTPs and booking updates.</small>
+          <small class="field-hint">Your Fast2SMS account authorization token. Stored securely and masked as ****** after saving.</small>
         </div>
 
         <div class="form-row">
-          <div class="form-group col-6">
-            <label>Sender ID (DLT / Header)</label>
-            <input type="text" [(ngModel)]="settings.fast2smsSenderId" placeholder="e.g. RNTRON" class="form-control" />
+          <div class="form-group col-4">
+            <label>SENDER ID (DLT Header)</label>
+            <input type="text" [(ngModel)]="settings.fast2smsSenderId" placeholder="e.g. FLOWZO" class="form-control" />
           </div>
-          <div class="form-group col-6">
+          <div class="form-group col-4">
             <label>Route</label>
             <select [(ngModel)]="settings.fast2smsRoute" class="form-control">
-              <option value="v3">v3 (Quick OTP)</option>
-              <option value="dlt">dlt (DLT Approved)</option>
+              <option value="dlt">dlt (DLT Approved - Recommended)</option>
               <option value="otp">otp (Dedicated OTP)</option>
+              <option value="v3">v3 (Quick Transactional)</option>
             </select>
+          </div>
+          <div class="form-group col-4">
+            <label>OTP Digits</label>
+            <input type="number" [(ngModel)]="settings.otpDigit" placeholder="6" class="form-control" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>OTP Message Template ID (DLT)</label>
+          <input type="text" [(ngModel)]="settings.otpMessageTemplate" placeholder="e.g. 214426" class="form-control" />
+          <small class="field-hint">DLT approved template identifier passed in the Fast2SMS payload (e.g. 214426).</small>
+        </div>
+
+        <!-- Test SMS Box -->
+        <div class="test-sms-box" style="margin-top: 16px; padding: 14px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px;">
+          <h4 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 700; color: #1E293B;">Test SMS Gateway Dispatch</h4>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="tel" [(ngModel)]="testPhone" placeholder="10-digit phone number (e.g. 9876543210)" class="form-control" style="flex: 1;" />
+            <button type="button" class="btn-secondary" (click)="sendTestSms()" [disabled]="isSendingTestSms || !testPhone" style="padding: 8px 14px; border-radius: 6px; white-space: nowrap; font-weight: 600;">
+              {{ isSendingTestSms ? 'Sending...' : 'Send Test SMS' }}
+            </button>
           </div>
         </div>
       </div>

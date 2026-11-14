@@ -26,6 +26,8 @@ export class BookingSettingComponent implements OnInit {
 
   isLoading = false;
   isSaving = false;
+  testPhone = '';
+  isSendingTestSms = false;
 
   constructor(
     private bookingSettingService: BookingSettingService,
@@ -48,6 +50,28 @@ export class BookingSettingComponent implements OnInit {
       error: (err) => {
         this.isLoading = false;
         this.toastService.showError(err.error?.message || 'Failed to load booking settings');
+      }
+    });
+  }
+
+  sendTestSms(): void {
+    if (!this.testPhone || this.testPhone.trim().length < 10) {
+      this.toastService.showError('Please enter a valid 10-digit mobile number for test SMS');
+      return;
+    }
+    this.isSendingTestSms = true;
+    this.bookingSettingService.testSms(this.testPhone.trim()).subscribe({
+      next: (res) => {
+        this.isSendingTestSms = false;
+        if (res.success) {
+          this.toastService.showSuccess(res.message || 'Test SMS dispatched successfully via Fast2SMS');
+        } else {
+          this.toastService.showError(res.message || 'Failed to dispatch test SMS');
+        }
+      },
+      error: (err) => {
+        this.isSendingTestSms = false;
+        this.toastService.showError(err.error?.message || 'Error occurred while triggering test SMS');
       }
     });
   }
