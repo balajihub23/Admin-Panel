@@ -38,9 +38,18 @@ app.use(
 );
 
 /**
+ * Return 404 for missing static assets (js, css, etc.)
+ * Never fall through to SSR/index.html for static assets!
+ */
+app.use(/\.(js|mjs|css|ico|png|jpg|jpeg|gif|svg|woff2?|map|json)$/, (req, res) => {
+  res.status(404).type('text/plain').send('Asset not found');
+});
+
+/**
  * Handle all other requests by rendering the Angular application.
  */
 app.use('/**', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   angularApp
     .handle(req)
     .then((response) =>
